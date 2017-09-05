@@ -25,18 +25,18 @@
  */
 
 /**
- * @file robotDefines.h
+ * @file robot_defines.h
  * @author Cyril Jourdan
  * @date Feb 24, 2017
- * @version 2.0.0
+ * @version OSA 0.1.0
  * @brief Header file for the defines related to the robot
  *
  * Contact: cyril.jourdan@therobotstudio.com
  * Created on : Jun 10, 2014
  */
 
-#ifndef ROBOTDEFINES_H_
-#define ROBOTDEFINES_H_
+#ifndef OSA_CONTROL_ROBOT_DEFINES_H
+#define OSA_CONTROL_ROBOT_DEFINES_H
 
 //#define OSA_DEBUG
 //#define BUILD_FOR_NEXUS_7
@@ -72,7 +72,7 @@
 #define SLAVE_PELVIS_ID			5
 #define SLAVE_HEAD_ID			6
 
-#define HEART_BEAT				15 //20 //30 //20 //(20 for 6 slaves with 16 nodes each) //(25 for 5 slaves with 15 nodes each)
+#define HEART_BEAT				15 //20 //30 //20 //(20 for 6 slaves with 16 nodes each) //(25 for 5 slaves with 15 nodes each) //TODO dynamic reconfigure
 
 //Commands
 #define SET_TARGET_POSITION 				0
@@ -109,7 +109,7 @@
 #define EYEBALL_YAW_CENTER			(DCX_EYEBALL_YAW_MIN + (DCX_EYEBALL_YAW_MAX - DCX_EYEBALL_YAW_MIN)/2);
 
 #define DCX_NECK_FRONT_LEFT_MIN		0 //calibrated
-#define DCX_NECK_FRONT_LEFT_MAX		0 //TODO
+#define DCX_NECK_FRONT_LEFT_MAX		0 //
 #define DCX_NECK_FRONT_RIGHT_MIN	(-DCX_NECK_FRONT_LEFT_MIN) //0 //calibrated
 #define DCX_NECK_FRONT_RIGHT_MAX	(-DCX_NECK_FRONT_LEFT_MAX)
 #define DCX_NECK_BACK_LEFT_MIN		12000 //-65000
@@ -117,10 +117,10 @@
 #define DCX_NECK_BACK_RIGHT_MIN		12000 //(-DCX_NECK_BACK_LEFT_MAX)
 #define DCX_NECK_BACK_RIGHT_MAX		80000 //(-DCX_NECK_BACK_LEFT_MIN)
 
-#define HEAD_PITCH_DOWN_LIMIT		0 //TODO
-#define HEAD_PITCH_UP_LIMIT			0 //TODO
-#define HEAD_YAW_LEFT_LIMIT			0 //TODO
-#define HEAD_YAW_RIGHT_LIMIT		0 //TODO
+#define HEAD_PITCH_DOWN_LIMIT		0 //
+#define HEAD_PITCH_UP_LIMIT			0 //
+#define HEAD_YAW_LEFT_LIMIT			0 //
+#define HEAD_YAW_RIGHT_LIMIT		0 //
 
 #define DCX_NECK_FRONT_LEFT_CURR	50
 #define DCX_NECK_FRONT_RIGHT_CURR	50 //(-DCX_NECK_FRONT_LEFT_CURR)
@@ -311,4 +311,4 @@
 #define MAX_POS_RIGHT_ARM_INFRA						50000
 #define MAX_POS_RIGHT_ARM_SUBSCAP					45000
 
-#endif /* ROBOTDEFINES_H_ */
+#endif // OSA_CONTROL_ROBOT_DEFINES_H

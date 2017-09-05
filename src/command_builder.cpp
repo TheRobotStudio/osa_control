@@ -38,10 +38,10 @@
 /*! Includes */
 #include <ros/ros.h>
 #include "osa_msgs/MotorCmdMultiArray.h"
-#include "robotDefines.h"
+#include "robot_defines.h"
 
 /*! Defines */
-#define LOOP_RATE		HEART_BEAT
+#define LOOP_RATE	HEART_BEAT
 
 /*! Variables */
 osa_msgs::MotorCmdMultiArray motor_cmd_array;
@@ -60,19 +60,19 @@ void resetMotorCmdMultiArray()
 	{
 		for(int j=0; j<NUMBER_MAX_EPOS2_PER_SLAVE; j++)
 		{
-			motor_cmd_array.motorCmd[i*NUMBER_MAX_EPOS2_PER_SLAVE + j].slaveBoardID = i + 1;
-			motor_cmd_array.motorCmd[i*NUMBER_MAX_EPOS2_PER_SLAVE + j].nodeID = j + 1; //i*NUMBER_MAX_EPOS2_PER_SLAVE + j + 1;
-			motor_cmd_array.motorCmd[i*NUMBER_MAX_EPOS2_PER_SLAVE + j].command = SEND_DUMB_MESSAGE;
-			motor_cmd_array.motorCmd[i*NUMBER_MAX_EPOS2_PER_SLAVE + j].value = 0;
+			//motor_cmd_array.motor_cmd[i*NUMBER_MAX_EPOS2_PER_SLAVE + j].slaveBoardID = i + 1;
+			motor_cmd_array.motor_cmd[i*NUMBER_MAX_EPOS2_PER_SLAVE + j].node_id = j + 1; //i*NUMBER_MAX_EPOS2_PER_SLAVE + j + 1;
+			motor_cmd_array.motor_cmd[i*NUMBER_MAX_EPOS2_PER_SLAVE + j].command = SEND_DUMB_MESSAGE;
+			motor_cmd_array.motor_cmd[i*NUMBER_MAX_EPOS2_PER_SLAVE + j].value = 0;
 		}
 	}
 }
 
-/*! \fn void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
+/*! \fn void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
  *  \brief
  *  \return void
  */
-void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
+void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
 	//cmds is expected to be dimension of 1 by NUMBER_MOTORS_ARM
 	#ifdef TRS_DEBUG
@@ -82,31 +82,31 @@ void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 
 	for(int i=0; i<cmds->layout.dim[0].stride; i++)
 	{
-		int motorIdx = (cmds->motorCmd[i].slaveBoardID - 1)*NUMBER_MAX_EPOS2_PER_SLAVE + (cmds->motorCmd[i].nodeID - 1);
+		int motorIdx = cmds->motor_cmd[i].node_id - 1; //(cmds->motor_cmd[i].slaveBoardID - 1)*NUMBER_MAX_EPOS2_PER_SLAVE + (cmds->motor_cmd[i].node_id - 1);
 
 		//check that motorIdx is within the range of the motor_cmd_array array
 		if((motorIdx>=0) && (motorIdx<motor_cmd_array.layout.dim[0].stride))
 		{
-			motor_cmd_array.motorCmd[motorIdx].slaveBoardID = cmds->motorCmd[i].slaveBoardID;
-			motor_cmd_array.motorCmd[motorIdx].nodeID = cmds->motorCmd[i].nodeID;
+			//motor_cmd_array.motor_cmd[motorIdx].slaveBoardID = cmds->motor_cmd[i].slaveBoardID;
+			motor_cmd_array.motor_cmd[motorIdx].node_id = cmds->motor_cmd[i].node_id;
 
 			//other cases just apply the command //TODO optimize because it sometimes doesn't need to go through this if
-			if((cmds->motorCmd[i].command != SET_TARGET_POSITION) && (cmds->motorCmd[i].command != SET_TARGET_VELOCITY)) //TODO add current mode
+			if((cmds->motor_cmd[i].command != SET_TARGET_POSITION) && (cmds->motor_cmd[i].command != SET_TARGET_VELOCITY)) //TODO add current mode
 			{
-				motor_cmd_array.motorCmd[motorIdx].command = cmds->motorCmd[i].command;
-				motor_cmd_array.motorCmd[motorIdx].value = cmds->motorCmd[i].value;
+				motor_cmd_array.motor_cmd[motorIdx].command = cmds->motor_cmd[i].command;
+				motor_cmd_array.motor_cmd[motorIdx].value = cmds->motor_cmd[i].value;
 
-	/*			if(motor_cmd_array.motorCmd[motorIdx].command == SET_MODES_OF_OPERATION)
+	/*			if(motor_cmd_array.motor_cmd[motorIdx].command == SET_MODES_OF_OPERATION)
 				{
 
 					//ROS_INFO("motor[%d][%d] - SET_MODES_OF_OPERATION command[%d] - value[%d]",
-							//motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID, motor_cmd_array.motorCmd[motorIdx].command, motor_cmd_array.motorCmd[motorIdx].value);
+							//motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id, motor_cmd_array.motor_cmd[motorIdx].command, motor_cmd_array.motor_cmd[motorIdx].value);
 				}
 	*/
-				//if(motor_cmd_array.motorCmd[motorIdx].slaveBoardID == 2 && motor_cmd_array.motorCmd[motorIdx].nodeID == 1) ROS_INFO("momo");
+				//if(motor_cmd_array.motor_cmd[motorIdx].slaveBoardID == 2 && motor_cmd_array.motor_cmd[motorIdx].node_id == 1) ROS_INFO("momo");
 
 				//ROS_INFO("motor[%d][%d] - command[%d] - value[%d]",
-				//		motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID, cmds->motorCmd[i].command, cmds->motorCmd[i].value);
+				//		motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id, cmds->motor_cmd[i].command, cmds->motor_cmd[i].value);
 			}
 
 			//check if the controlword needs to be set in order to send a Profile Position command.
@@ -116,14 +116,14 @@ void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 				//check if Profile Position mode is activated
 				if(modeOfOperation[motorIdx] == PROFILE_POSITION_MODE)
 				{
-					motor_cmd_array.motorCmd[motorIdx].command = SET_CONTROLWORD;
-					motor_cmd_array.motorCmd[motorIdx].value = 0x002F;
+					motor_cmd_array.motor_cmd[motorIdx].command = SET_CONTROLWORD;
+					motor_cmd_array.motor_cmd[motorIdx].value = 0x002F;
 					profilePositionCmdStep[motorIdx] = 3; //jump to step 3 to send the upper state
 				}
 				else
 				{
-					motor_cmd_array.motorCmd[motorIdx].command = SET_MODES_OF_OPERATION;
-					motor_cmd_array.motorCmd[motorIdx].value = PROFILE_POSITION_MODE;
+					motor_cmd_array.motor_cmd[motorIdx].command = SET_MODES_OF_OPERATION;
+					motor_cmd_array.motor_cmd[motorIdx].value = PROFILE_POSITION_MODE;
 					profilePositionCmdStep[motorIdx] = 2; //increase to send the upper state
 					modeOfOperation[motorIdx] = PROFILE_POSITION_MODE;
 				}
@@ -132,34 +132,34 @@ void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			}
 			else if(profilePositionCmdStep[motorIdx] == 2) //send the lower state of the controlword bit
 			{
-				motor_cmd_array.motorCmd[motorIdx].command = SET_CONTROLWORD;
-				motor_cmd_array.motorCmd[motorIdx].value = 0x002F;
+				motor_cmd_array.motor_cmd[motorIdx].command = SET_CONTROLWORD;
+				motor_cmd_array.motor_cmd[motorIdx].value = 0x002F;
 				profilePositionCmdStep[motorIdx] = 3; //increase to send the upper state
 				cmdIgnored[motorIdx] = true;
 
 				//ROS_INFO("motor[%d][%d] - Profile Position - send the lower state of the controlword bit",
-						//motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID);
+						//motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id);
 			}
 			else if(profilePositionCmdStep[motorIdx] == 3) //send the lower state of the controlword bit
 			{
-				motor_cmd_array.motorCmd[motorIdx].command = SET_CONTROLWORD;
-				motor_cmd_array.motorCmd[motorIdx].value = 0x003F;
+				motor_cmd_array.motor_cmd[motorIdx].command = SET_CONTROLWORD;
+				motor_cmd_array.motor_cmd[motorIdx].value = 0x003F;
 				profilePositionCmdStep[motorIdx] = 0; //reset to 0 after the new position has been applied
 				cmdIgnored[motorIdx] = true;
 
 				//ROS_INFO("motor[%d][%d] - Profile Position - send the upper state of the controlword bit",
-						//motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID);
+						//motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id);
 			}
 			else // == 0
 			{
-				if(cmds->motorCmd[i].command == SET_TARGET_POSITION)
+				if(cmds->motor_cmd[i].command == SET_TARGET_POSITION)
 				{
-					motor_cmd_array.motorCmd[motorIdx].command = cmds->motorCmd[i].command;
-					motor_cmd_array.motorCmd[motorIdx].value = cmds->motorCmd[i].value;
+					motor_cmd_array.motor_cmd[motorIdx].command = cmds->motor_cmd[i].command;
+					motor_cmd_array.motor_cmd[motorIdx].value = cmds->motor_cmd[i].value;
 					profilePositionCmdStep[motorIdx] = 1;
 
 					//ROS_INFO("motor[%d][%d] - Profile Position - send target position [%d]",
-							//motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID, motor_cmd_array.motorCmd[motorIdx].value);
+							//motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id, motor_cmd_array.motor_cmd[motorIdx].value);
 				}
 
 				cmdIgnored[motorIdx] = false;
@@ -171,14 +171,14 @@ void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 				//check if Profile Velocity mode is activated
 				if(modeOfOperation[motorIdx] == PROFILE_VELOCITY_MODE)
 				{
-					motor_cmd_array.motorCmd[motorIdx].command = SET_CONTROLWORD;
-					motor_cmd_array.motorCmd[motorIdx].value = 0x000F;
+					motor_cmd_array.motor_cmd[motorIdx].command = SET_CONTROLWORD;
+					motor_cmd_array.motor_cmd[motorIdx].value = 0x000F;
 					profileVelocityCmdStep[motorIdx] = 0; //reset to 0 after the new velocity has been applied
 				}
 				else
 				{
-					motor_cmd_array.motorCmd[motorIdx].command = SET_MODES_OF_OPERATION;
-					motor_cmd_array.motorCmd[motorIdx].value = PROFILE_VELOCITY_MODE;
+					motor_cmd_array.motor_cmd[motorIdx].command = SET_MODES_OF_OPERATION;
+					motor_cmd_array.motor_cmd[motorIdx].value = PROFILE_VELOCITY_MODE;
 					profileVelocityCmdStep[motorIdx] = 2; //increase to send the controlword
 					modeOfOperation[motorIdx] = PROFILE_VELOCITY_MODE;
 				}
@@ -187,24 +187,24 @@ void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			}
 			else if(profileVelocityCmdStep[motorIdx] == 2) //set the controlword bit
 			{
-				motor_cmd_array.motorCmd[motorIdx].command = SET_CONTROLWORD;
-				motor_cmd_array.motorCmd[motorIdx].value = 0x000F;
+				motor_cmd_array.motor_cmd[motorIdx].command = SET_CONTROLWORD;
+				motor_cmd_array.motor_cmd[motorIdx].value = 0x000F;
 				profileVelocityCmdStep[motorIdx] = 0; //reset to 0 after the new velocity has been applied
 				cmdIgnored[motorIdx] = true;
 
 				//ROS_INFO("motor[%d][%d] - Profile Velocity [%d] - set the controlword bit",
-						//motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID, motor_cmd_array.motorCmd[motorIdx].command);
+						//motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id, motor_cmd_array.motor_cmd[motorIdx].command);
 			}
 			else // == 0
 			{
-				if(cmds->motorCmd[i].command == SET_TARGET_VELOCITY)
+				if(cmds->motor_cmd[i].command == SET_TARGET_VELOCITY)
 				{
-					motor_cmd_array.motorCmd[motorIdx].command = cmds->motorCmd[i].command;
-					motor_cmd_array.motorCmd[motorIdx].value = cmds->motorCmd[i].value;
+					motor_cmd_array.motor_cmd[motorIdx].command = cmds->motor_cmd[i].command;
+					motor_cmd_array.motor_cmd[motorIdx].value = cmds->motor_cmd[i].value;
 					profileVelocityCmdStep[motorIdx] = 1;
 
 					//ROS_INFO("motor[%d][%d] - Profile Velocity [%d] - send target velocity [%d]",
-							//motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID, motor_cmd_array.motorCmd[motorIdx].command, motor_cmd_array.motorCmd[motorIdx].value);
+							//motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id, motor_cmd_array.motor_cmd[motorIdx].command, motor_cmd_array.motor_cmd[motorIdx].value);
 				}
 
 				cmdIgnored[motorIdx] = false;
@@ -217,26 +217,26 @@ void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			//check if the command was not replaced by a controlword cmd
 			if(!cmdIgnored[motorIdx])
 			{
-				if(cmds->motorCmd[i].command == SET_MODES_OF_OPERATION)
+				if(cmds->motor_cmd[i].command == SET_MODES_OF_OPERATION)
 				{
 					//update the mode of operation
-					modeOfOperation[motorIdx] = cmds->motorCmd[i].value;
+					modeOfOperation[motorIdx] = cmds->motor_cmd[i].value;
 
-					//if(motor_cmd_array.motorCmd[motorIdx].slaveBoardID == 1 && motor_cmd_array.motorCmd[motorIdx].nodeID == 1)
-					//	ROS_INFO("motor[%d][%d] cmd[%d] val[%d]", motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID, motor_cmd_array.motorCmd[motorIdx].command, motor_cmd_array.motorCmd[motorIdx].value);
+					//if(motor_cmd_array.motor_cmd[motorIdx].slaveBoardID == 1 && motor_cmd_array.motor_cmd[motorIdx].node_id == 1)
+					//	ROS_INFO("motor[%d][%d] cmd[%d] val[%d]", motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id, motor_cmd_array.motor_cmd[motorIdx].command, motor_cmd_array.motor_cmd[motorIdx].value);
 
 				}
 	/*
-				if(cmds->motorCmd[i].command == SET_CURRENT_MODE_SETTING_VALUE)
+				if(cmds->motor_cmd[i].command == SET_CURRENT_MODE_SETTING_VALUE)
 				{
-					if(motor_cmd_array.motorCmd[motorIdx].slaveBoardID == 1 && motor_cmd_array.motorCmd[motorIdx].nodeID == 1)
-										ROS_INFO("motor[%d][%d] cmd[%d] val[%d]", motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID, motor_cmd_array.motorCmd[motorIdx].command, motor_cmd_array.motorCmd[motorIdx].value);
+					if(motor_cmd_array.motor_cmd[motorIdx].slaveBoardID == 1 && motor_cmd_array.motor_cmd[motorIdx].node_id == 1)
+										ROS_INFO("motor[%d][%d] cmd[%d] val[%d]", motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id, motor_cmd_array.motor_cmd[motorIdx].command, motor_cmd_array.motor_cmd[motorIdx].value);
 				}
 	*/
 			}
 
-			//if(motor_cmd_array.motorCmd[motorIdx].slaveBoardID == 2 && motor_cmd_array.motorCmd[motorIdx].nodeID == 1)
-			//ROS_INFO("motor[%d][%d] cmd[%d] val[%d]", motor_cmd_array.motorCmd[motorIdx].slaveBoardID, motor_cmd_array.motorCmd[motorIdx].nodeID, motor_cmd_array.motorCmd[motorIdx].command, motor_cmd_array.motorCmd[motorIdx].value);
+			//if(motor_cmd_array.motor_cmd[motorIdx].slaveBoardID == 2 && motor_cmd_array.motor_cmd[motorIdx].node_id == 1)
+			//ROS_INFO("motor[%d][%d] cmd[%d] val[%d]", motor_cmd_array.motor_cmd[motorIdx].slaveBoardID, motor_cmd_array.motor_cmd[motorIdx].node_id, motor_cmd_array.motor_cmd[motorIdx].command, motor_cmd_array.motor_cmd[motorIdx].value);
 
 			//reset to false for the next cycle
 			cmdIgnored[motorIdx] = false;
@@ -246,12 +246,12 @@ void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 	//SPECIAL CASES FOR CURRENT MODE MOTORS (with broken encoders)
 /*
 	//Right Shoulder, Arm - Triceps
-	if((cmds->motorCmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].slaveBoardID == 3) && (cmds->motorCmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].nodeID == 3))
+	if((cmds->motor_cmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].slaveBoardID == 3) && (cmds->motor_cmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].node_id == 3))
 	{
-		motor_cmd_array.motorCmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].slaveBoardID = 3;
-		motor_cmd_array.motorCmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].nodeID = 3; //i*NUMBER_MAX_EPOS2_PER_SLAVE + j + 1;
-		motor_cmd_array.motorCmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].command = SET_CURRENT_MODE_SETTING_VALUE;
-		motor_cmd_array.motorCmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].value = 150;
+		motor_cmd_array.motor_cmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].slaveBoardID = 3;
+		motor_cmd_array.motor_cmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].node_id = 3; //i*NUMBER_MAX_EPOS2_PER_SLAVE + j + 1;
+		motor_cmd_array.motor_cmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].command = SET_CURRENT_MODE_SETTING_VALUE;
+		motor_cmd_array.motor_cmd[2*NUMBER_MAX_EPOS2_PER_SLAVE + 2].value = 150;
 	}
 */
 }
@@ -265,7 +265,7 @@ void setMotorCommands_cb(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 int main(int argc, char** argv)
 {
 	//Initialize ROS
-    ros::init(argc, argv, "osa_commandBuilder_node");
+    ros::init(argc, argv, "osa_command_builder_node");
     ros::NodeHandle nh;
     ros::Rate r(LOOP_RATE);
 
@@ -277,10 +277,10 @@ int main(int argc, char** argv)
     	sub_setSBCommands[i] = nh.subscribe("/setSBCommands", 1, setSBCommands_cb);
     }
 */
-    ros::Subscriber sub_setMotorCommands = nh.subscribe("/set_motor_commands", 1, setMotorCommands_cb);
+    ros::Subscriber sub_set_motor_commands = nh.subscribe("/set_motor_commands", 1, setMotorCommandsCallback);
 
 	//Publishers
-	ros::Publisher pub_sendMotorCmdMultiArray = nh.advertise<osa_msgs::MotorCmdMultiArray>("/motor_cmd_array", 1);
+	ros::Publisher pub_send_motor_cmd_array = nh.advertise<osa_msgs::MotorCmdMultiArray>("/motor_cmd_array", 1);
 
 	//create the cmd multi array
 	motor_cmd_array.layout.dim.push_back(std_msgs::MultiArrayDimension());
@@ -295,8 +295,8 @@ int main(int argc, char** argv)
 
 	motor_cmd_array.layout.data_offset = 0;
 
-	motor_cmd_array.motorCmd.clear();
-	motor_cmd_array.motorCmd.resize(NUMBER_SLAVE_BOARDS*NUMBER_MAX_EPOS2_PER_SLAVE);
+	motor_cmd_array.motor_cmd.clear();
+	motor_cmd_array.motor_cmd.resize(NUMBER_SLAVE_BOARDS*NUMBER_MAX_EPOS2_PER_SLAVE);
 
 	while(ros::ok())
 	{
@@ -307,7 +307,7 @@ int main(int argc, char** argv)
 
 
 		//publish the final motor command package
-		pub_sendMotorCmdMultiArray.publish(motor_cmd_array); //publish it
+		pub_send_motor_cmd_array.publish(motor_cmd_array); //publish it
 
 		r.sleep();
 	}

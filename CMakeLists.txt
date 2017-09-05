@@ -39,7 +39,6 @@ find_package(catkin REQUIRED COMPONENTS
 #   Message2.msg
 # )
 
-#if(0)
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
@@ -57,7 +56,6 @@ generate_messages(
   std_msgs
   osa_msgs
 )
-#endif()
 
 ## Generate dynamic reconfigure options
 #generate_dynamic_reconfigure_options(
@@ -97,62 +95,30 @@ include_directories(/usr/include/eigen3)
 #   src/${PROJECT_NAME}/osa_control.cpp
 # )
 
-if(1)
-
 ## Declare a cpp executable
-add_executable(osa_commandBuilder src/commandBuilder.cpp)
-add_executable(osa_bagRecorderMotion src/bagRecorderMotion.cpp)
-add_executable(osa_xBoxJoyConductor src/xBoxJoyConductor.cpp)
-add_executable(osa_armManual src/armManual.cpp)
-add_executable(osa_mobileBaseManual src/mobileBaseManual.cpp) 
-add_executable(osa_mobileBaseFollower src/mobileBaseFollower.cpp) 
-add_executable(osa_baseTestModes src/baseTestModes.cpp)
-#add_executable(osa_kdtreeImuToShoulder src/kdtreeImuToShoulder.cpp)
-
-#add_executable(osa_kdTreeRecorder src/kdTreeRecorder.cpp)
-#add_executable(osa_kdTreePlayer src/kdTreePlayer.cpp)
-#add_executable(osa_sequencerPlayer src/sequencerPlayer.cpp)
-#add_executable(osa_sequenceRecorder src/sequenceRecorder.cpp)
-#add_executable(osa_mobileBase src/mobileBase.cpp)
-#add_executable(osa_seqFilePlayer src/seqFilePlayer.cpp)
-#add_executable(osa_mergeBags src/mergeBags.cpp)
-#add_executable(osa_leapArmDemo src/leapArmDemo.cpp)
-#add_executable(osa_armDemo src/armDemo.cpp)
-#add_executable(osa_graspingDemo src/graspingDemo.cpp)
-#add_executable(osa_objectTracking src/objectTracking.cpp)
-#add_executable(osa_armObjectTraking src/armObjectTraking.cpp) 
-#add_executable(osa_conductor src/conductor.cpp)
+add_executable(osa_command_builder src/command_builder.cpp)
+add_executable(osa_bag_recorder_motion src/bag_recorder_motion.cpp)
+add_executable(osa_xbox_joy_conductor src/xbox_joy_conductor.cpp)
+add_executable(osa_arm_manual src/arm_manual.cpp)
+add_executable(osa_mobile_base_manual src/mobile_base_manual.cpp) 
+add_executable(osa_mobile_base_follower src/mobile_base_follower.cpp) 
+add_executable(osa_base_test_modes src/base_test_modes.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(osa_control_node osa_control_generate_messages_cpp) 			#TODO
-# add_dependencies(example4 osa_control_gencfg)		#TODO
+add_dependencies(osa_arm_manual osa_control_generate_messages_cpp)
+add_dependencies(osa_mobile_base_manual osa_control_generate_messages_cpp)
+add_dependencies(osa_mobile_base_follower osa_control_generate_messages_cpp)
+add_dependencies(osa_xbox_joy_conductor osa_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(osa_commandBuilder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-target_link_libraries(osa_bagRecorderMotion ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-target_link_libraries(osa_baseTestModes ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-target_link_libraries(osa_xBoxJoyConductor ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-target_link_libraries(osa_armManual ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-target_link_libraries(osa_mobileBaseManual ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-target_link_libraries(osa_mobileBaseFollower ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_kdtreeImuToShoulder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-
-#target_link_libraries(osa_kdTreeRecorder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_kdTreePlayer ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_sequencerPlayer ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_mobileBase ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_seqFilePlayer ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_sequenceRecorder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_mergeBags ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_objectTracking ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_leapArmDemo ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_armDemo ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_graspingDemo ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_armObjectTraking ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-#target_link_libraries(osa_conductor ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
-
-endif()
+target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_bag_recorder_motion ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_xbox_joy_conductor ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_base_test_modes ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_arm_manual ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_mobile_base_manual ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_mobile_base_follower ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 
 #############
 ## Install ##

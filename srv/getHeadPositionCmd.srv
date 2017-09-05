@@ -1,9 +1,9 @@
-int32 headYaw
-int32 headPitch
-int32 eyeYaw
-int32 eyePitch
-int32 eyeRoll
-int32 eyeIris
+int32 head_yaw
+int32 head_pitch
+int32 eye_yaw
+int32 eye_pitch
+int32 eye_roll
+int32 eye_iris
 bool recenter
 ---
-osa_msgs/MotorCmdMultiArray motorCmdMultiArray
+osa_msgs/MotorCmdMultiArray motor_cmd_multi_array

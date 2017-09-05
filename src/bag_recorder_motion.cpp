@@ -35,29 +35,29 @@
 #include <rosbag/recorder.h>
 #include <osa_msgs/MotorDataMultiArray.h>
 #include <stdio.h>
-#include "robotDefines.h"
+#include "robot_defines.h"
 
  /*** Defines ***/
 #define LOOP_RATE	HEART_BEAT
 
 /*** Variables ***/
-osa_msgs::MotorDataMultiArray motorData_ma;
+osa_msgs::MotorDataMultiArray motor_data_array;
 
 //to wait for the msg from both posture and anglesArmDescription topics
-bool motorData_ma_arrived = false;
+bool motor_data_array_arrived = false;
 
 /*** Callback functions ***/
-void motorDataArray_cb(const osa_msgs::MotorDataMultiArrayConstPtr& data)
+void motorDataArrayCallback(const osa_msgs::MotorDataMultiArrayConstPtr& data)
 {
-	motorData_ma = *data;
-	motorData_ma_arrived = true;
+	motor_data_array = *data;
+	motor_data_array_arrived = true;
 }
 
 /*** Main ***/
 int main (int argc, char** argv)
 {
 	// Initialize ROS
-	ros::init(argc, argv, "osa_bagRecorderMotion_node");
+	ros::init(argc, argv, "osa_bag_recorder_motion_node");
 	ros::NodeHandle nh;
 	bool run = true;
 
@@ -67,7 +67,7 @@ int main (int argc, char** argv)
 	bag.open(ros::package::getPath("osa_control") + "/bag/arm/imuRawToShoulder_1.bag", rosbag::bagmode::Write); //imuRawToShoulder_1  //btnA
 
 	//Subscribers
-	ros::Subscriber sub_motorDataArray = nh.subscribe ("/motor_data_array", 10, motorDataArray_cb);
+	ros::Subscriber sub_motorDataArray = nh.subscribe ("/motor_data_array", 10, motorDataArrayCallback);
 
 	int loopNb = 0;
 
@@ -79,15 +79,15 @@ int main (int argc, char** argv)
 	{
 		ros::spinOnce(); //listen to topics
 
-		if(motorData_ma_arrived)// && imuRaw_arrived)
+		if(motor_data_array_arrived)// && imuRaw_arrived)
 		{
 			//get time
 			ros::Time time = ros::Time::now();
 			//write data to the bag
-			bag.write("/motor_data_array", time, motorData_ma);
+			bag.write("/motor_data_array", time, motor_data_array);
 
 			//but this back to false for the next record
-			motorData_ma_arrived = false;
+			motor_data_array_arrived = false;
 
 			//loopNb++;
 		}

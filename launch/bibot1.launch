@@ -1,0 +1,17 @@
+<launch>
+	<include file="$(find osa_communication)/launch/master_board.launch"/>
+	<node name="osa_command_builder_node" pkg="osa_control" type="osa_command_builder" respawn="true"/>
+	<node name="osa_joy_node" pkg="joy" type="joy_node" respawn="true"/>
+
+	<include file="$(find osa_vision)/launch/usb_cam_face.launch"/>
+	<node name="osa_face_recognition_node" pkg="osa_vision" type="osa_face_recognition" respawn="true"/>
+	<node name="osa_faytech_gui_node" pkg="osa_vision" type="osa_faytech_gui" respawn="true"/>
+
+	<node name="osa_xbox_joy_conductor_node" pkg="osa_control" type="osa_xbox_joy_conductor" respawn="true"/>
+	<node name="osa_arm_manual_node" pkg="osa_control" type="osa_arm_manual" respawn="true"/>
+	<node name="osa_mobile_base_manual_node" pkg="osa_control" type="osa_mobile_base_manual" respawn="true"/>
+	<node name="osa_mobile_base_follower_node" pkg="osa_control" type="osa_mobile_base_follower" respawn="true"/>
+
+	<!--node name="osa_caffe_node" pkg="ros_caffe" type="ros_caffe_test" respawn="true"/-->
+</launch>
+

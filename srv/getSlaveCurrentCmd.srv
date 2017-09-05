@@ -1,5 +1,6 @@
+# Deprecated
 #slaveNb from 1 to 6
-int32 slaveNb
+int32 slave_nb
 int32 current
 ---
-osa_msgs/MotorCmdMultiArray motorCmdMultiArray
+osa_msgs/MotorCmdMultiArray motor_cmd_multi_array

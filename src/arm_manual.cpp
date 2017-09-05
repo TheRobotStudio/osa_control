@@ -47,7 +47,7 @@
 #include <flann/flann.hpp> //used for the kdtree search
 #include <stdio.h>
 //ROS packages include 
-#include "robotDefines.h"
+#include "robot_defines.h"
 
 /*** Defines ***/
 #define LOOP_RATE			HEART_BEAT
@@ -96,28 +96,28 @@ using namespace flann;
 
 /*** Variables ***/
 bool switch_node = false; //disable by default
-osa_msgs::MotorCmdMultiArray motorCmd_ma;
+osa_msgs::MotorCmdMultiArray motor_cmd_array;
 //razor_imu_9dof::RazorImu razorImu;
 //razor_imu_9dof::RazorImu playerImuRef;
-sensor_msgs::Joy xboxJoy;
+sensor_msgs::Joy xbox_joy;
 
-int selectedKdtree = 0;
+int selected_kd_tree = 0;
 int dataset_dim = 0; //this will depend on the size of the bag, number of lines of data
 
 //right arm
 //Matrix<float> dataset_R_angles; //matrix for the angles
-Matrix<int> dataset_R_positions; //matrix for the positions
-Matrix<float> query_R(new float[SPACE_DIM*REF_DATA_DIM], REF_DATA_DIM, SPACE_DIM); //matrix for the query, just one line
-Matrix<int> indices_R(new int[query_R.rows*SPACE_DIM], query_R.rows, NUM_NN);
-Matrix<float> dists_R(new float[query_R.rows*SPACE_DIM], query_R.rows, NUM_NN);
+Matrix<int> dataset_r_positions; //matrix for the positions
+Matrix<float> query_r(new float[SPACE_DIM*REF_DATA_DIM], REF_DATA_DIM, SPACE_DIM); //matrix for the query, just one line
+Matrix<int> indices_r(new int[query_r.rows*SPACE_DIM], query_r.rows, NUM_NN);
+Matrix<float> dists_r(new float[query_r.rows*SPACE_DIM], query_r.rows, NUM_NN);
 
-float handVal = 0;
-float rotatorVal = 0;
-float elbowVal = 0;
+float hand_val = 0;
+float rotator_val = 0;
+float elbow_val = 0;
 
 //bool imu_arrived = false;
 bool joy_arrived = false;
-bool velTest = false;
+bool vel_test = false;
 
 //bool enableImu = false;
 
@@ -173,9 +173,9 @@ void imuRaw_cb(const razor_imu_9dof::RazorImuConstPtr& imu)
 }
 */
 
-void joy_cb(const sensor_msgs::JoyConstPtr& joy)
+void joyCallback(const sensor_msgs::JoyConstPtr& joy)
 {
-	xboxJoy = *joy;
+	xbox_joy = *joy;
 	joy_arrived = true;
 }
 
@@ -187,14 +187,14 @@ bool switchNode(osa_control::switchNode::Request  &req, osa_control::switchNode:
 	return true;
 }
 
-bool getMotorCmd_ma(osa_control::getSlaveCmdArray::Request  &req, osa_control::getSlaveCmdArray::Response &res)
+bool getMotorCmdArray(osa_control::getSlaveCmdArray::Request  &req, osa_control::getSlaveCmdArray::Response &res)
 {
 	//ROS_INFO("cmd srv");
 
 	//send the motorCmdSet set by the callback function motorDataSet_cb
 	if(switch_node)
 	{
-		res.motorCmdMultiArray = motorCmd_ma;
+		res.motor_cmd_multi_array = motor_cmd_array;
 		return true;
 	}
 	else
@@ -207,17 +207,17 @@ bool getMotorCmd_ma(osa_control::getSlaveCmdArray::Request  &req, osa_control::g
 int main (int argc, char** argv)
 {
 	// Initialize ROS
-	ros::init (argc, argv, "osa_armManual_server_node");
+	ros::init (argc, argv, "osa_arm_manual_server_node");
 	ros::NodeHandle nh;
 	ros::Rate r(LOOP_RATE);
 
 	//Subscribers
 	//ros::Subscriber sub_imuRaw = nh.subscribe ("/imuRaw", 10, imuRaw_cb);
-	ros::Subscriber sub_joy = nh.subscribe ("/joy", 10, joy_cb);
+	ros::Subscriber sub_joy = nh.subscribe ("/joy", 10, joyCallback);
 
 	//Services
-	ros::ServiceServer srv_switchNode = nh.advertiseService("switch_right_arm_manual_srv", switchNode);
-	ros::ServiceServer srv_getMotorCmd_ma = nh.advertiseService("get_right_arm_manual_cmd_srv", getMotorCmd_ma);
+	ros::ServiceServer srv_switch_node = nh.advertiseService("switch_right_arm_manual_srv", switchNode);
+	ros::ServiceServer srv_get_motor_cmd_array = nh.advertiseService("get_right_arm_manual_cmd_srv", getMotorCmdArray);
 
 	//various kdtrees drives the shoulder and biceps
 	//Initialization of the kd tree
@@ -257,7 +257,7 @@ int main (int argc, char** argv)
 	//create the dataset_positions matrix
 	int dataset_post_dim = view_posture.size(); //set the dataset dim equal to the number of lines in the bag file
 	Matrix<int> tempR2(new int[DOF_DIM*dataset_post_dim], dataset_post_dim, DOF_DIM);
-	dataset_R_positions = tempR2;
+	dataset_r_positions = tempR2;
 
 	line = 0;
 	BOOST_FOREACH(rosbag::MessageInstance const m, view_posture) //error compiles ok
@@ -269,7 +269,7 @@ int main (int argc, char** argv)
 			//Build the dataset_positions matrix
 			for(int j=0; j<DOF_DIM; j++)
 			{
-				dataset_R_positions.ptr()[dataset_R_positions.cols*line+j] = i->motorData[j].position;
+				dataset_r_positions.ptr()[dataset_r_positions.cols*line+j] = i->motor_data[j].position;
 			}
 		}
 		else
@@ -280,38 +280,38 @@ int main (int argc, char** argv)
 
 	bag.close();
 
-	displayMatrixInt(dataset_R_positions, "postures");
+	displayMatrixInt(dataset_r_positions, "postures");
 
 	//create the commands multi array
-	motorCmd_ma.layout.dim.push_back(std_msgs::MultiArrayDimension());
-	motorCmd_ma.layout.dim[0].size = NUMBER_MAX_EPOS2_PER_SLAVE;
-	motorCmd_ma.layout.dim[0].stride = NUMBER_MAX_EPOS2_PER_SLAVE;
-	motorCmd_ma.layout.dim[0].label = "motors";
-	motorCmd_ma.layout.data_offset = 0;
-	motorCmd_ma.motorCmd.clear();
-	motorCmd_ma.motorCmd.resize(NUMBER_MAX_EPOS2_PER_SLAVE);
+	motor_cmd_array.layout.dim.push_back(std_msgs::MultiArrayDimension());
+	motor_cmd_array.layout.dim[0].size = NUMBER_MAX_EPOS2_PER_SLAVE;
+	motor_cmd_array.layout.dim[0].stride = NUMBER_MAX_EPOS2_PER_SLAVE;
+	motor_cmd_array.layout.dim[0].label = "motors";
+	motor_cmd_array.layout.data_offset = 0;
+	motor_cmd_array.motor_cmd.clear();
+	motor_cmd_array.motor_cmd.resize(NUMBER_MAX_EPOS2_PER_SLAVE);
 	
 	for(int i=0; i<NUMBER_MAX_EPOS2_PER_SLAVE; i++)
 	{
-		motorCmd_ma.motorCmd[i].slaveBoardID = BIBOT_ARM_SLAVEBOARD_ID;
-		motorCmd_ma.motorCmd[i].nodeID = i+1;
-		motorCmd_ma.motorCmd[i].command = SEND_DUMB_MESSAGE;
-		motorCmd_ma.motorCmd[i].value = 0;	
+		//motor_cmd_array.motor_cmd[i].slaveBoardID = BIBOT_ARM_SLAVEBOARD_ID;
+		motor_cmd_array.motor_cmd[i].node_id = i+1;
+		motor_cmd_array.motor_cmd[i].command = SEND_DUMB_MESSAGE;
+		motor_cmd_array.motor_cmd[i].value = 0;
 	}
 
 	//speed of sequences
-	int speedA = 1;
-	int speedB = 1;
-	int speedX = 2;
-	int speedY = 1;
+	int speed_a = 1;
+	int speed_b = 1;
+	int speed_x = 2;
+	int speed_y = 1;
 
-	float resetYAW = 0;
+	float reset_yaw = 0;
 
 	//line to play in the database
-	int data_R_idx = 42; //start somewhere in the database, line number 42
+	int data_r_idx = 42; //start somewhere in the database, line number 42
 
-	bool crossTop = false;
-	bool crossBottom = false;
+	bool cross_top = false;
+	bool cross_bottom = false;
 
 	while(ros::ok())
 	{	
@@ -323,13 +323,13 @@ int main (int argc, char** argv)
 			if(joy_arrived)
 			{
 					
-				//if((xboxJoy.buttons[4]==1) && (xboxJoy.buttons[5]==0)) //btn LB to enable manual control
+				//if((xbox_joy.buttons[4]==1) && (xbox_joy.buttons[5]==0)) //btn LB to enable manual control
 				//{
 /*
 					if(!enableImu) //each time the player reactivate the manual control, it's YAW position is subsctracted
 					{
-						resetYAW = razorImu.yaw;
-						ROS_INFO("resetYAW = %f", resetYAW);
+						reset_yaw = razorImu.yaw;
+						ROS_INFO("reset_yaw = %f", reset_yaw);
 					}
 
 					enableImu = true; //then set to true so the previous if is no longer appied when the player keep pressing
@@ -337,14 +337,14 @@ int main (int argc, char** argv)
 					//ROS_INFO("move shoulder");
 					//move shoulder
 /*
-					if(query_R.cols == SPACE_DIM)
+					if(query_r.cols == SPACE_DIM)
 					{
-						query_R.ptr()[0] = razorImu.roll;
-						query_R.ptr()[1] = razorImu.pitch;
-						query_R.ptr()[2] = razorImu.yaw-resetYAW;
+						query_r.ptr()[0] = razorImu.roll;
+						query_r.ptr()[1] = razorImu.pitch;
+						query_r.ptr()[2] = razorImu.yaw-reset_yaw;
 					}
 
-					//ROS_INFO("%f %f %f", razorImu.roll, razorImu.pitch, razorImu.yaw-resetYAW);
+					//ROS_INFO("%f %f %f", razorImu.roll, razorImu.pitch, razorImu.yaw-reset_yaw);
 
 					//ROS_INFO("construct a randomized kd-tree index using 4 kd-trees");
 					// construct a randomized kd-tree index using 4 kd-trees
@@ -353,211 +353,211 @@ int main (int argc, char** argv)
 
 					//ROS_INFO("do a knn search, using 128 checks");
 					// do a knn search, using 128 checks
-					data_R_index.knnSearch(query_R, indices_R, dists_R, SPACE_DIM, flann::SearchParams(128));
+					data_R_index.knnSearch(query_r, indices_r, dists_r, SPACE_DIM, flann::SearchParams(128));
 
-					int data_R_idx = indices_R.ptr()[0];
+					int data_r_idx = indices_r.ptr()[0];
 */
 					//skip the IMU here and use the cross buttons on the xBox controller					
 					
-					if((!crossTop) && (xboxJoy.buttons[13]==1)) 
+					if((!cross_top) && (xbox_joy.buttons[13]==1))
 					{
-						data_R_idx -= 10;
-						crossTop = true;
+						data_r_idx -= 10;
+						cross_top = true;
 					}
 
-					if(crossTop && (xboxJoy.buttons[13]==0)) 
+					if(cross_top && (xbox_joy.buttons[13]==0))
 					{
-						crossTop = false;
+						cross_top = false;
 					}
 
-					if((!crossBottom) && (xboxJoy.buttons[14]==1)) 
+					if((!cross_bottom) && (xbox_joy.buttons[14]==1))
 					{
-						data_R_idx += 10;
-						crossBottom = true;
+						data_r_idx += 10;
+						cross_bottom = true;
 					}
 
-					if(crossBottom && (xboxJoy.buttons[14]==0)) 
+					if(cross_bottom && (xbox_joy.buttons[14]==0))
 					{
-						crossBottom = false;
+						cross_bottom = false;
 					}
 
-					//if(crossTop) data_R_idx--;
-					//if(crossBottom) data_R_idx++;
+					//if(cross_top) data_r_idx--;
+					//if(cross_bottom) data_r_idx++;
 					
 					//clip
-					if(data_R_idx<0) data_R_idx=0;
-					if(data_R_idx>=dataset_dim) data_R_idx=dataset_dim-1;
+					if(data_r_idx<0) data_r_idx=0;
+					if(data_r_idx>=dataset_dim) data_r_idx=dataset_dim-1;
 
 					//ROS_INFO("init of the packet");
 					//init of the packet
 					for(int i=1; i<DOF_DIM-2; i++) //no biceps, no brachi/triceps
 					{
 						//R
-						motorCmd_ma.motorCmd[i].slaveBoardID = BIBOT_ARM_SLAVEBOARD_ID;
-						motorCmd_ma.motorCmd[i].nodeID = i+1;
-						motorCmd_ma.motorCmd[i].command = SET_TARGET_POSITION;
-						motorCmd_ma.motorCmd[i].value = dataset_R_positions.ptr()[dataset_R_positions.cols*data_R_idx+i];
+						//motor_cmd_array.motor_cmd[i].slaveBoardID = BIBOT_ARM_SLAVEBOARD_ID;
+						motor_cmd_array.motor_cmd[i].node_id = i+1;
+						motor_cmd_array.motor_cmd[i].command = SET_TARGET_POSITION;
+						motor_cmd_array.motor_cmd[i].value = dataset_r_positions.ptr()[dataset_r_positions.cols*data_r_idx+i];
 					}
 
-					//ROS_INFO("data_R_idx=%d", data_R_idx);
+					//ROS_INFO("data_r_idx=%d", data_r_idx);
 
 					//Move Hand
-					float handVal_f = xboxJoy.axes[5];
+					float hand_val_f = xbox_joy.axes[5];
 					//remap value from [-1;1] to [MIN_POS;MAX_POS]
-					handVal_f *= -(MAX_POS_HAND-MIN_POS_HAND)/2; // 2 = 1 - (-1)
-					handVal_f += MAX_POS_HAND-(MAX_POS_HAND-MIN_POS_HAND)/2;
-					int handVal_i = (int)handVal_f;
+					hand_val_f *= -(MAX_POS_HAND-MIN_POS_HAND)/2; // 2 = 1 - (-1)
+					hand_val_f += MAX_POS_HAND-(MAX_POS_HAND-MIN_POS_HAND)/2;
+					int hand_val_i = (int)hand_val_f;
 
-					//ROS_INFO("handVal_i = %d", handVal_i);
+					//ROS_INFO("hand_val_i = %d", hand_val_i);
 
 					//clip
-					if(handVal_i>MAX_POS_HAND) handVal_i = MAX_POS_HAND;
-					if(handVal_i<MIN_POS_HAND) handVal_i = MIN_POS_HAND;
+					if(hand_val_i>MAX_POS_HAND) hand_val_i = MAX_POS_HAND;
+					if(hand_val_i<MIN_POS_HAND) hand_val_i = MIN_POS_HAND;
 
-					motorCmd_ma.motorCmd[0+10].command = SET_TARGET_POSITION;
-					motorCmd_ma.motorCmd[0+10].value = handVal_i;
+					motor_cmd_array.motor_cmd[0+10].command = SET_TARGET_POSITION;
+					motor_cmd_array.motor_cmd[0+10].value = hand_val_i;
 
 					//Move Thumb
-					float thumbVal_f = xboxJoy.axes[2];
+					float thumbVal_f = xbox_joy.axes[2];
 					//remap value from [-1;1] to [MIN_POS;MAX_POS]
 					thumbVal_f *= -(MAX_POS_THUMB-MIN_POS_THUMB)/2; // 2 = 1 - (-1)
 					thumbVal_f += MAX_POS_THUMB-(MAX_POS_THUMB-MIN_POS_THUMB)/2;
-					int thumbVal_i = (int)thumbVal_f;
+					int thumb_val_i = (int)thumbVal_f;
 
-					//ROS_INFO("thumbVal_f = %d", thumbVal_i);
+					//ROS_INFO("thumbVal_f = %d", thumb_val_i);
 
 					//clip
-					if(thumbVal_i>MAX_POS_THUMB) thumbVal_i = MAX_POS_THUMB;
-					if(thumbVal_i<MIN_POS_THUMB) thumbVal_i = MIN_POS_THUMB;
+					if(thumb_val_i>MAX_POS_THUMB) thumb_val_i = MAX_POS_THUMB;
+					if(thumb_val_i<MIN_POS_THUMB) thumb_val_i = MIN_POS_THUMB;
 
-					motorCmd_ma.motorCmd[5+10].command = SET_TARGET_POSITION;
-					motorCmd_ma.motorCmd[5+10].value = thumbVal_i;
+					motor_cmd_array.motor_cmd[5+10].command = SET_TARGET_POSITION;
+					motor_cmd_array.motor_cmd[5+10].value = thumb_val_i;
 
 					//Move Rotator
-					float rotatorVal_f = xboxJoy.axes[0];
+					float rotator_val_f = xbox_joy.axes[0];
 					//remap value from [-1;1] to [MIN_POS;MAX_POS]
-					rotatorVal_f *= (MAX_POS_ROTATOR-MIN_POS_ROTATOR)/2; // 2 = 1 - (-1)
-					rotatorVal_f += MAX_POS_ROTATOR-(MAX_POS_ROTATOR-MIN_POS_ROTATOR)/2;
-					int rotatorVal_i = (int)rotatorVal_f;
+					rotator_val_f *= (MAX_POS_ROTATOR-MIN_POS_ROTATOR)/2; // 2 = 1 - (-1)
+					rotator_val_f += MAX_POS_ROTATOR-(MAX_POS_ROTATOR-MIN_POS_ROTATOR)/2;
+					int rotator_val_i = (int)rotator_val_f;
 
-					//ROS_INFO("rotatorVal_i = %d", rotatorVal_i);
+					//ROS_INFO("rotator_val_i = %d", rotator_val_i);
 
 					//clip
-					if(rotatorVal_i>MAX_POS_ROTATOR) rotatorVal_i = MAX_POS_ROTATOR;
-					if(rotatorVal_i<MIN_POS_ROTATOR) rotatorVal_i = MIN_POS_ROTATOR;
+					if(rotator_val_i>MAX_POS_ROTATOR) rotator_val_i = MAX_POS_ROTATOR;
+					if(rotator_val_i<MIN_POS_ROTATOR) rotator_val_i = MIN_POS_ROTATOR;
 
-					motorCmd_ma.motorCmd[1+10].command = SET_TARGET_POSITION;
-					motorCmd_ma.motorCmd[1+10].value = rotatorVal_i;
+					motor_cmd_array.motor_cmd[1+10].command = SET_TARGET_POSITION;
+					motor_cmd_array.motor_cmd[1+10].value = rotator_val_i;
 
 					//Move Brachi
-					float brachiVal_f = xboxJoy.axes[1];
+					float brachi_val_f = xbox_joy.axes[1];
 					//remap value from [-1;1] to [MIN_POS;MAX_POS]
-					brachiVal_f *= -(MAX_POS_BRACHI-MIN_POS_BRACHI)/2; // 2 = 1 - (-1)
-					brachiVal_f += MAX_POS_BRACHI-(MAX_POS_BRACHI-MIN_POS_BRACHI)/2;
-					int brachiVal_i = (int)brachiVal_f;
+					brachi_val_f *= -(MAX_POS_BRACHI-MIN_POS_BRACHI)/2; // 2 = 1 - (-1)
+					brachi_val_f += MAX_POS_BRACHI-(MAX_POS_BRACHI-MIN_POS_BRACHI)/2;
+					int brachi_val_i = (int)brachi_val_f;
 
-					//ROS_INFO("brachiVal_i = %d", brachiVal_i);
+					//ROS_INFO("brachi_val_i = %d", brachi_val_i);
 
 					//clip
-					if(brachiVal_i>MAX_POS_BRACHI) brachiVal_i = MAX_POS_BRACHI;
-					if(brachiVal_i<MIN_POS_BRACHI) brachiVal_i = MIN_POS_BRACHI;
+					if(brachi_val_i>MAX_POS_BRACHI) brachi_val_i = MAX_POS_BRACHI;
+					if(brachi_val_i<MIN_POS_BRACHI) brachi_val_i = MIN_POS_BRACHI;
 
-					motorCmd_ma.motorCmd[9].command = SET_TARGET_POSITION;
-					motorCmd_ma.motorCmd[9].value = brachiVal_i;
+					motor_cmd_array.motor_cmd[9].command = SET_TARGET_POSITION;
+					motor_cmd_array.motor_cmd[9].value = brachi_val_i;
 
 					//Move triceps
-					float tricepsVal_f = xboxJoy.axes[1];
+					float tricepsVal_f = xbox_joy.axes[1];
 					//remap value from [-1;1] to [MIN_POS;MAX_POS]
 					tricepsVal_f *= (MAX_POS_TRICEPS-MIN_POS_TRICEPS)/2; // 2 = 1 - (-1)
 					tricepsVal_f += MAX_POS_TRICEPS-(MAX_POS_TRICEPS-MIN_POS_TRICEPS)/2;
-					int tricepsVal_i = (int)tricepsVal_f;
+					int triceps_val_i = (int)tricepsVal_f;
 
-					//ROS_INFO("tricepsVal_i = %d", tricepsVal_i);
+					//ROS_INFO("triceps_val_i = %d", triceps_val_i);
 
 					//clip
-					if(tricepsVal_i>MAX_POS_TRICEPS) tricepsVal_i = MAX_POS_TRICEPS;
-					if(tricepsVal_i<MIN_POS_TRICEPS) tricepsVal_i = MIN_POS_TRICEPS;
+					if(triceps_val_i>MAX_POS_TRICEPS) triceps_val_i = MAX_POS_TRICEPS;
+					if(triceps_val_i<MIN_POS_TRICEPS) triceps_val_i = MIN_POS_TRICEPS;
 
-					motorCmd_ma.motorCmd[8].command = SET_TARGET_POSITION;
-					motorCmd_ma.motorCmd[8].value = tricepsVal_i;
+					motor_cmd_array.motor_cmd[8].command = SET_TARGET_POSITION;
+					motor_cmd_array.motor_cmd[8].value = triceps_val_i;
 
 					//Move Wrist left right
-					float wristLRVal_f = xboxJoy.axes[3]; //left right
+					float wrist_lr_val_f = xbox_joy.axes[3]; //left right
 					//remap value from [-1;1] to [MIN_POS;MAX_POS]
-					wristLRVal_f *= -(MAX_POS_WRIST_UP-MIN_POS_WRIST_UP)/2; // 2 = 1 - (-1)
-					wristLRVal_f += MAX_POS_WRIST_UP-(MAX_POS_WRIST_UP-MIN_POS_WRIST_UP)/2;
-					int wristLRVal_i = (int)wristLRVal_f;
+					wrist_lr_val_f *= -(MAX_POS_WRIST_UP-MIN_POS_WRIST_UP)/2; // 2 = 1 - (-1)
+					wrist_lr_val_f += MAX_POS_WRIST_UP-(MAX_POS_WRIST_UP-MIN_POS_WRIST_UP)/2;
+					int wrist_lr_val_i = (int)wrist_lr_val_f;
 
-					//ROS_INFO("wristLRVal_i = %d", wristLRVal_i);
+					//ROS_INFO("wrist_lr_val_i = %d", wrist_lr_val_i);
 
 					//clip
-					if(wristLRVal_i>MAX_POS_WRIST_UP) wristLRVal_i = MAX_POS_WRIST_UP;
-					if(wristLRVal_i<MIN_POS_WRIST_UP) wristLRVal_i = MIN_POS_WRIST_UP;
+					if(wrist_lr_val_i>MAX_POS_WRIST_UP) wrist_lr_val_i = MAX_POS_WRIST_UP;
+					if(wrist_lr_val_i<MIN_POS_WRIST_UP) wrist_lr_val_i = MIN_POS_WRIST_UP;
 
-					motorCmd_ma.motorCmd[3+10].command = SET_TARGET_POSITION;
-					motorCmd_ma.motorCmd[3+10].value = wristLRVal_i;
+					motor_cmd_array.motor_cmd[3+10].command = SET_TARGET_POSITION;
+					motor_cmd_array.motor_cmd[3+10].value = wrist_lr_val_i;
 
 					//Move Wrist up down
-					float wristUDVal_f = xboxJoy.axes[4]; //up down
+					float wrist_ud_val_f = xbox_joy.axes[4]; //up down
 					//remap value from [-1;1] to [MIN_POS;MAX_POS]
-					wristUDVal_f *= (MAX_POS_WRIST_IN-MIN_POS_WRIST_IN)/2; // 2 = 1 - (-1)
-					wristUDVal_f += MAX_POS_WRIST_IN-(MAX_POS_WRIST_IN-MIN_POS_WRIST_IN)/2;
-					int wristUDVal_i = (int)wristUDVal_f;
+					wrist_ud_val_f *= (MAX_POS_WRIST_IN-MIN_POS_WRIST_IN)/2; // 2 = 1 - (-1)
+					wrist_ud_val_f += MAX_POS_WRIST_IN-(MAX_POS_WRIST_IN-MIN_POS_WRIST_IN)/2;
+					int wrist_ud_val_i = (int)wrist_ud_val_f;
 
-					//ROS_INFO("wristUDVal_i = %d", wristUDVal_i);
+					//ROS_INFO("wrist_ud_val_i = %d", wrist_ud_val_i);
 
 					//clip
-					if(wristUDVal_i>MAX_POS_WRIST_IN) wristUDVal_i = MAX_POS_WRIST_IN;
-					if(wristUDVal_i<MIN_POS_WRIST_IN) wristUDVal_i = MIN_POS_WRIST_IN;
+					if(wrist_ud_val_i>MAX_POS_WRIST_IN) wrist_ud_val_i = MAX_POS_WRIST_IN;
+					if(wrist_ud_val_i<MIN_POS_WRIST_IN) wrist_ud_val_i = MIN_POS_WRIST_IN;
 
-					motorCmd_ma.motorCmd[2+10].command = SET_TARGET_POSITION;
-					motorCmd_ma.motorCmd[2+10].value = wristUDVal_i;
+					motor_cmd_array.motor_cmd[2+10].command = SET_TARGET_POSITION;
+					motor_cmd_array.motor_cmd[2+10].value = wrist_ud_val_i;
 
 					//Move Wrist left right
-					float wristUDVal2_f = xboxJoy.axes[4]; //up down
+					float wrist_ud_val2_f = xbox_joy.axes[4]; //up down
 					//remap value from [-1;1] to [MIN_POS;MAX_POS]
-					wristUDVal2_f *= (MAX_POS_WRIST_DOWN-MIN_POS_WRIST_DOWN)/2; // 2 = 1 - (-1)
-					wristUDVal2_f += MAX_POS_WRIST_DOWN-(MAX_POS_WRIST_DOWN-MIN_POS_WRIST_DOWN)/2;
-					int wristUDVal2_i = (int)wristUDVal2_f;
+					wrist_ud_val2_f *= (MAX_POS_WRIST_DOWN-MIN_POS_WRIST_DOWN)/2; // 2 = 1 - (-1)
+					wrist_ud_val2_f += MAX_POS_WRIST_DOWN-(MAX_POS_WRIST_DOWN-MIN_POS_WRIST_DOWN)/2;
+					int wrist_ud_val2_i = (int)wrist_ud_val2_f;
 
-					//ROS_INFO("wristUDVal_i = %d", wristUDVal_i);
+					//ROS_INFO("wrist_ud_val_i = %d", wrist_ud_val_i);
 
 					//clip
-					if(wristUDVal2_i>MAX_POS_WRIST_DOWN) wristUDVal2_i = MAX_POS_WRIST_DOWN;
-					if(wristUDVal2_i<MIN_POS_WRIST_DOWN) wristUDVal2_i = MIN_POS_WRIST_DOWN;
+					if(wrist_ud_val2_i>MAX_POS_WRIST_DOWN) wrist_ud_val2_i = MAX_POS_WRIST_DOWN;
+					if(wrist_ud_val2_i<MIN_POS_WRIST_DOWN) wrist_ud_val2_i = MIN_POS_WRIST_DOWN;
 
-					motorCmd_ma.motorCmd[4+10].command = SET_TARGET_POSITION;
-					motorCmd_ma.motorCmd[4+10].value = wristUDVal2_i;
+					motor_cmd_array.motor_cmd[4+10].command = SET_TARGET_POSITION;
+					motor_cmd_array.motor_cmd[4+10].value = wrist_ud_val2_i;
 
 					//by default apply current on biceps
-					motorCmd_ma.motorCmd[0].command = SET_CURRENT_MODE_SETTING_VALUE;
-					motorCmd_ma.motorCmd[0].value = 250;
+					motor_cmd_array.motor_cmd[0].command = SET_CURRENT_MODE_SETTING_VALUE;
+					motor_cmd_array.motor_cmd[0].value = 250;
 
 /*
-					if(xboxJoy.buttons[0]) //A
+					if(xbox_joy.buttons[0]) //A
 					{
 						//ROS_INFO("butA_pressed");
 
 						ros::Rate r1(LOOP_RATE);
 
-						for(int i=0; i<btnA_positions.rows/speedA; i++)// /2
+						for(int i=0; i<btnA_positions.rows/speed_a; i++)// /2
 						{
 							//ROS_INFO("for each rows");
 
 							for(int j=0; j<NUMBER_MOTORS_ARM; j++)
 							{
-								rightArmCmd_ma.motorCmd[j].nodeID = j+1;
-								rightArmCmd_ma.motorCmd[j].command = SET_TARGET_POSITION;
-								rightArmCmd_ma.motorCmd[j].value = btnA_positions.ptr()[btnA_positions.cols*i*speedA+j]; //i*2
+								rightArmCmd_ma.motor_cmd[j].node_id = j+1;
+								rightArmCmd_ma.motor_cmd[j].command = SET_TARGET_POSITION;
+								rightArmCmd_ma.motor_cmd[j].value = btnA_positions.ptr()[btnA_positions.cols*i*speed_a+j]; //i*2
 
-								//ROS_INFO("val = %d", rightArmCmd_ma.motorCmd[j].value);
+								//ROS_INFO("val = %d", rightArmCmd_ma.motor_cmd[j].value);
 							}
 
 							for(int j=0; j<NUMBER_MOTORS_HAND; j++)
 							{
-								rightHandCmd_ma.motorCmd[j].nodeID = j+1;
-								rightHandCmd_ma.motorCmd[j].command = SET_TARGET_POSITION;
-								rightHandCmd_ma.motorCmd[j].value = btnA_positions.ptr()[btnA_positions.cols*i*speedA+j+NUMBER_MOTORS_ARM]; // u*2
+								rightHandCmd_ma.motor_cmd[j].node_id = j+1;
+								rightHandCmd_ma.motor_cmd[j].command = SET_TARGET_POSITION;
+								rightHandCmd_ma.motor_cmd[j].value = btnA_positions.ptr()[btnA_positions.cols*i*speed_a+j+NUMBER_MOTORS_ARM]; // u*2
 							}
 
 							pub_motorHandCmdMultiArray.publish(rightHandCmd_ma);
@@ -567,28 +567,28 @@ int main (int argc, char** argv)
 						}
 					}
 
-					if(xboxJoy.buttons[1]) //B
+					if(xbox_joy.buttons[1]) //B
 					{
 						ros::Rate r1(LOOP_RATE);
 
-						for(int i=0; i<btnB_positions.rows/speedB; i++)// /2
+						for(int i=0; i<btnB_positions.rows/speed_b; i++)// /2
 						{
 							//ROS_INFO("for each rows");
 
 							for(int j=0; j<NUMBER_MOTORS_ARM; j++)
 							{
-								rightArmCmd_ma.motorCmd[j].nodeID = j+1;
-								rightArmCmd_ma.motorCmd[j].command = SET_TARGET_POSITION;
-								rightArmCmd_ma.motorCmd[j].value = btnB_positions.ptr()[btnB_positions.cols*i*speedB+j]; //i*2
+								rightArmCmd_ma.motor_cmd[j].node_id = j+1;
+								rightArmCmd_ma.motor_cmd[j].command = SET_TARGET_POSITION;
+								rightArmCmd_ma.motor_cmd[j].value = btnB_positions.ptr()[btnB_positions.cols*i*speed_b+j]; //i*2
 
-								//ROS_INFO("val = %d", rightArmCmd_ma.motorCmd[j].value);
+								//ROS_INFO("val = %d", rightArmCmd_ma.motor_cmd[j].value);
 							}
 
 							for(int j=0; j<NUMBER_MOTORS_HAND; j++)
 							{
-								rightHandCmd_ma.motorCmd[j].nodeID = j+1;
-								rightHandCmd_ma.motorCmd[j].command = SET_TARGET_POSITION;
-								rightHandCmd_ma.motorCmd[j].value = btnB_positions.ptr()[btnB_positions.cols*i*speedB+j+NUMBER_MOTORS_ARM]; // u*2
+								rightHandCmd_ma.motor_cmd[j].node_id = j+1;
+								rightHandCmd_ma.motor_cmd[j].command = SET_TARGET_POSITION;
+								rightHandCmd_ma.motor_cmd[j].value = btnB_positions.ptr()[btnB_positions.cols*i*speed_b+j+NUMBER_MOTORS_ARM]; // u*2
 							}
 
 							pub_motorHandCmdMultiArray.publish(rightHandCmd_ma);
@@ -600,28 +600,28 @@ int main (int argc, char** argv)
 						//butB_pressed = false;
 					}
 
-					if(xboxJoy.buttons[2]) //X
+					if(xbox_joy.buttons[2]) //X
 					{
 						ros::Rate r1(LOOP_RATE);
 
-						for(int i=0; i<btnX_positions.rows/speedX; i++)// /2
+						for(int i=0; i<btnX_positions.rows/speed_x; i++)// /2
 						{
 							//ROS_INFO("for each rows");
 
 							for(int j=0; j<NUMBER_MOTORS_ARM; j++)
 							{
-								rightArmCmd_ma.motorCmd[j].nodeID = j+1;
-								rightArmCmd_ma.motorCmd[j].command = SET_TARGET_POSITION;
-								rightArmCmd_ma.motorCmd[j].value = btnX_positions.ptr()[btnX_positions.cols*i*speedX+j]; //i*2
+								rightArmCmd_ma.motor_cmd[j].node_id = j+1;
+								rightArmCmd_ma.motor_cmd[j].command = SET_TARGET_POSITION;
+								rightArmCmd_ma.motor_cmd[j].value = btnX_positions.ptr()[btnX_positions.cols*i*speed_x+j]; //i*2
 
-								//ROS_INFO("val = %d", rightArmCmd_ma.motorCmd[j].value);
+								//ROS_INFO("val = %d", rightArmCmd_ma.motor_cmd[j].value);
 							}
 
 							for(int j=0; j<NUMBER_MOTORS_HAND; j++)
 							{
-								rightHandCmd_ma.motorCmd[j].nodeID = j+1;
-								rightHandCmd_ma.motorCmd[j].command = SET_TARGET_POSITION;
-								rightHandCmd_ma.motorCmd[j].value = btnX_positions.ptr()[btnX_positions.cols*i*speedX+j+NUMBER_MOTORS_ARM]; // u*2
+								rightHandCmd_ma.motor_cmd[j].node_id = j+1;
+								rightHandCmd_ma.motor_cmd[j].command = SET_TARGET_POSITION;
+								rightHandCmd_ma.motor_cmd[j].value = btnX_positions.ptr()[btnX_positions.cols*i*speed_x+j+NUMBER_MOTORS_ARM]; // u*2
 							}
 
 							pub_motorHandCmdMultiArray.publish(rightHandCmd_ma);
@@ -633,28 +633,28 @@ int main (int argc, char** argv)
 						//butX_pressed = false;
 					}
 
-					if(xboxJoy.buttons[3]) //Y
+					if(xbox_joy.buttons[3]) //Y
 					{
 						ros::Rate r1(LOOP_RATE);
 
-						for(int i=0; i<btnY_positions.rows/speedY; i++)// /2
+						for(int i=0; i<btnY_positions.rows/speed_y; i++)// /2
 						{
 							//ROS_INFO("for each rows");
 
 							for(int j=0; j<NUMBER_MOTORS_ARM; j++)
 							{
-								rightArmCmd_ma.motorCmd[j].nodeID = j+1;
-								rightArmCmd_ma.motorCmd[j].command = SET_TARGET_POSITION;
-								rightArmCmd_ma.motorCmd[j].value = btnY_positions.ptr()[btnY_positions.cols*i*speedY+j]; //i*2
+								rightArmCmd_ma.motor_cmd[j].node_id = j+1;
+								rightArmCmd_ma.motor_cmd[j].command = SET_TARGET_POSITION;
+								rightArmCmd_ma.motor_cmd[j].value = btnY_positions.ptr()[btnY_positions.cols*i*speed_y+j]; //i*2
 
-								//ROS_INFO("val = %d", rightArmCmd_ma.motorCmd[j].value);
+								//ROS_INFO("val = %d", rightArmCmd_ma.motor_cmd[j].value);
 							}
 
 							for(int j=0; j<NUMBER_MOTORS_HAND; j++)
 							{
-								rightHandCmd_ma.motorCmd[j].nodeID = j+1;
-								rightHandCmd_ma.motorCmd[j].command = SET_TARGET_POSITION;
-								rightHandCmd_ma.motorCmd[j].value = btnY_positions.ptr()[btnY_positions.cols*i*speedY+j+NUMBER_MOTORS_ARM]; // u*2
+								rightHandCmd_ma.motor_cmd[j].node_id = j+1;
+								rightHandCmd_ma.motor_cmd[j].command = SET_TARGET_POSITION;
+								rightHandCmd_ma.motor_cmd[j].value = btnY_positions.ptr()[btnY_positions.cols*i*speed_y+j+NUMBER_MOTORS_ARM]; // u*2
 							}
 
 							pub_motorHandCmdMultiArray.publish(rightHandCmd_ma);
@@ -673,55 +673,55 @@ int main (int argc, char** argv)
 				//	enableImu = false;
 				//}
 /*
-				if((xboxJoy.buttons[4]==0) && (xboxJoy.buttons[5]==1)) //btn RB to enable homing and current
+				if((xbox_joy.buttons[4]==0) && (xbox_joy.buttons[5]==1)) //btn RB to enable homing and current
 				{
-					if(xboxJoy.buttons[6]) //back button : zero homing mode
+					if(xbox_joy.buttons[6]) //back button : zero homing mode
 					{
 						for(int i=0; i<NUMBER_MOTORS_ARM; i++)
 						{
-							rightArmCmd_ma.motorCmd[i].nodeID = i+1;
-							rightArmCmd_ma.motorCmd[i].command = SET_TARGET_POSITION;
-							rightArmCmd_ma.motorCmd[i].value = 0;
+							rightArmCmd_ma.motor_cmd[i].node_id = i+1;
+							rightArmCmd_ma.motor_cmd[i].command = SET_TARGET_POSITION;
+							rightArmCmd_ma.motor_cmd[i].value = 0;
 						}
 
 						for(int i=0; i<NUMBER_MOTORS_HAND; i++)
 						{
-							rightHandCmd_ma.motorCmd[i].nodeID = i+1;
-							rightHandCmd_ma.motorCmd[i].command = SET_TARGET_POSITION;
-							rightHandCmd_ma.motorCmd[i].value = 0;
+							rightHandCmd_ma.motor_cmd[i].node_id = i+1;
+							rightHandCmd_ma.motor_cmd[i].command = SET_TARGET_POSITION;
+							rightHandCmd_ma.motor_cmd[i].value = 0;
 						}					
 					}
 
-					if(xboxJoy.buttons[7]) //start button : current mode
+					if(xbox_joy.buttons[7]) //start button : current mode
 					{
 						int curr = 120; //150;
 
 						for(int i=0; i<NUMBER_MOTORS_ARM; i++)
 						{
-							rightArmCmd_ma.motorCmd[i].nodeID = i+1;
-							rightArmCmd_ma.motorCmd[i].command = SET_CURRENT_MODE_SETTING_VALUE;
-							rightArmCmd_ma.motorCmd[i].value = curr;
+							rightArmCmd_ma.motor_cmd[i].node_id = i+1;
+							rightArmCmd_ma.motor_cmd[i].command = SET_CURRENT_MODE_SETTING_VALUE;
+							rightArmCmd_ma.motor_cmd[i].value = curr;
 						}
 
-						rightArmCmd_ma.motorCmd[0].value = 180; // 250;
-						rightArmCmd_ma.motorCmd[1].value = 180; // 250;
-						rightArmCmd_ma.motorCmd[9].value = 180; // 250;
+						rightArmCmd_ma.motor_cmd[0].value = 180; // 250;
+						rightArmCmd_ma.motor_cmd[1].value = 180; // 250;
+						rightArmCmd_ma.motor_cmd[9].value = 180; // 250;
 
 						for(int i=0; i<NUMBER_MOTORS_HAND; i++)
 						{
-							rightHandCmd_ma.motorCmd[i].nodeID = i+1;
-							rightHandCmd_ma.motorCmd[i].command = SET_CURRENT_MODE_SETTING_VALUE;
-							rightHandCmd_ma.motorCmd[i].value = curr;
+							rightHandCmd_ma.motor_cmd[i].node_id = i+1;
+							rightHandCmd_ma.motor_cmd[i].command = SET_CURRENT_MODE_SETTING_VALUE;
+							rightHandCmd_ma.motor_cmd[i].value = curr;
 						}
 
 						//for the 2 inverted wrist motors
-						//rightHandCmd_ma.motorCmd[1].command = SET_TARGET_POSITION;
-						rightHandCmd_ma.motorCmd[1].value = 0;
+						//rightHandCmd_ma.motor_cmd[1].command = SET_TARGET_POSITION;
+						rightHandCmd_ma.motor_cmd[1].value = 0;
 
-						rightHandCmd_ma.motorCmd[2].value = 60; //80;
-						rightHandCmd_ma.motorCmd[3].value = 60; //80;
-						rightHandCmd_ma.motorCmd[4].value = 60; //80;
-						rightHandCmd_ma.motorCmd[5].value = 50;					
+						rightHandCmd_ma.motor_cmd[2].value = 60; //80;
+						rightHandCmd_ma.motor_cmd[3].value = 60; //80;
+						rightHandCmd_ma.motor_cmd[4].value = 60; //80;
+						rightHandCmd_ma.motor_cmd[5].value = 50;
 					}
 				}*/	
 			}
@@ -741,16 +741,16 @@ int main (int argc, char** argv)
 
 	//free matrix pointers from memory
 	//delete[] dataset_R_angles.ptr();
-	delete[] dataset_R_positions.ptr();
+	delete[] dataset_r_positions.ptr();
 /*
 	delete[] btnA_positions.ptr();
 	delete[] btnB_positions.ptr();
 	delete[] btnX_positions.ptr();
 	delete[] btnY_positions.ptr();
 */
-	delete[] query_R.ptr();
-	delete[] indices_R.ptr();
-	delete[] dists_R.ptr();
+	delete[] query_r.ptr();
+	delete[] indices_r.ptr();
+	delete[] dists_r.ptr();
 
 	return 0;
 }

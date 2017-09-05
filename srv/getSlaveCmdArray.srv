@@ -1,2 +1,3 @@
+# Deprecated
 ---
-osa_msgs/MotorCmdMultiArray motorCmdMultiArray
+osa_msgs/MotorCmdMultiArray motor_cmd_multi_array

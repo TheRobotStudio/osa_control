@@ -43,7 +43,7 @@
 //other
 #include <stdio.h>
 //ROS packages include 
-#include "robotDefines.h"
+#include "robot_defines.h"
 
 /*** Defines ***/
 #define LOOP_RATE				HEART_BEAT
@@ -54,13 +54,13 @@
 //ROS publisher
 //ros::Publisher pub_motorBaseCmd_ma;
 
-osa_msgs::MotorCmdMultiArray motorCmd_ma;
+osa_msgs::MotorCmdMultiArray motor_cmd_array;
 //sensor_msgs::Joy xboxJoy;
-std_msgs::Int16MultiArray objectCoords;
+std_msgs::Int16MultiArray object_coords;
 
 bool switch_node = false; //disable by default
 //bool joy_arrived = false;
-bool objectCoords_arrived = false;
+bool object_coords_arrived = false;
 //bool stateBtn_RB = false;
 //bool stateBtn_A = false;
 //bool motorData_ma_arrived = false;
@@ -76,14 +76,14 @@ void joy_cb(const sensor_msgs::JoyConstPtr& joy)
 	stateBtn_A = (bool)xboxJoy.buttons[0];
 }*/
 
-void objectCoords_cb(const std_msgs::Int16MultiArrayConstPtr& oc)
+void objectCoordsCallback(const std_msgs::Int16MultiArrayConstPtr& oc)
 {	
 	if((oc->data[0] != -1) && (oc->data[1] != -1) && (oc->data[2] < 500)) //if object detected
 	{
-		objectCoords = *oc;
-		objectCoords_arrived = true;		
+		object_coords = *oc;
+		object_coords_arrived = true;
 	}
-	else	objectCoords_arrived = false;
+	else	object_coords_arrived = false;
 }
 
 /*** Services ***/
@@ -94,14 +94,14 @@ bool switchNode(osa_control::switchNode::Request  &req, osa_control::switchNode:
 	return true;
 }
 
-bool getMotorCmd_ma(osa_control::getSlaveCmdArray::Request  &req, osa_control::getSlaveCmdArray::Response &res)
+bool getMotorCmdArray(osa_control::getSlaveCmdArray::Request  &req, osa_control::getSlaveCmdArray::Response &res)
 {
 	//ROS_INFO("cmd srv");
 
 	//send the motorCmdSet set by the callback function motorDataSet_cb
 	if(switch_node)
 	{
-		res.motorCmdMultiArray = motorCmd_ma;
+		res.motor_cmd_multi_array = motor_cmd_array;
 		return true;
 	}
 	else
@@ -114,51 +114,51 @@ bool getMotorCmd_ma(osa_control::getSlaveCmdArray::Request  &req, osa_control::g
 int main (int argc, char** argv)
 {
 	// Initialize ROS
-	ros::init (argc, argv, "osa_mobileBaseFollower_server_node");
+	ros::init (argc, argv, "osa_mobile_base_follower_server_node");
 	ros::NodeHandle nh;
 	ros::Rate r(LOOP_RATE);
 
 	//Subscribers
-	ros::Subscriber sub_headCoords = nh.subscribe ("/headCoords", 10, objectCoords_cb);
+	ros::Subscriber sub_headCoords = nh.subscribe ("/head_coords", 10, objectCoordsCallback);
 
 	//Publishers
 	//pub_motorBaseCmd_ma = nh.advertise<osa_msgs::MotorCmdMultiArray>("/set_base_cmd", 100, true);
 
 	//Services
 	ros::ServiceServer srv_switchNode = nh.advertiseService("switch_mobile_base_follower_srv", switchNode);
-	ros::ServiceServer srv_getMotorCmd_ma = nh.advertiseService("get_mobile_base_follower_cmd_srv", getMotorCmd_ma);
+	ros::ServiceServer srv_getMotorCmdArray = nh.advertiseService("get_mobile_base_follower_cmd_srv", getMotorCmdArray);
 	
 	//create the commands multi array
-	motorCmd_ma.layout.dim.push_back(std_msgs::MultiArrayDimension());
-	motorCmd_ma.layout.dim[0].size = NUMBER_MOTORS_BASE;
-	motorCmd_ma.layout.dim[0].stride = NUMBER_MOTORS_BASE;
-	motorCmd_ma.layout.dim[0].label = "motors";
-	motorCmd_ma.layout.data_offset = 0;
-	motorCmd_ma.motorCmd.clear();
-	motorCmd_ma.motorCmd.resize(NUMBER_MOTORS_BASE);
+	motor_cmd_array.layout.dim.push_back(std_msgs::MultiArrayDimension());
+	motor_cmd_array.layout.dim[0].size = NUMBER_MOTORS_BASE;
+	motor_cmd_array.layout.dim[0].stride = NUMBER_MOTORS_BASE;
+	motor_cmd_array.layout.dim[0].label = "motors";
+	motor_cmd_array.layout.data_offset = 0;
+	motor_cmd_array.motor_cmd.clear();
+	motor_cmd_array.motor_cmd.resize(NUMBER_MOTORS_BASE);
 
 	for(int i=0; i<NUMBER_MOTORS_BASE; i++)
 	{
-		motorCmd_ma.motorCmd[i].slaveBoardID = BIBOT_BASE_SLAVEBOARD_ID;
-		motorCmd_ma.motorCmd[i].nodeID = i+1;
-		motorCmd_ma.motorCmd[i].command = SEND_DUMB_MESSAGE;
-		motorCmd_ma.motorCmd[i].value = 0;
+		//motor_cmd_array.motor_cmd[i].slaveBoardID = BIBOT_BASE_SLAVEBOARD_ID;
+		motor_cmd_array.motor_cmd[i].node_id = i+1;
+		motor_cmd_array.motor_cmd[i].command = SEND_DUMB_MESSAGE;
+		motor_cmd_array.motor_cmd[i].value = 0;
 	}
 
-	float baseLR_f = 0; //left right
-	float baseUD_f = 0; //up down
-	float leftWheel_f = 0;
-	float rightWheel_f = 0;
-	int leftWheel_i = 0;
-	int rightWheel_i = 0;
+	float base_lr_f = 0; //left right
+	float base_ud_f = 0; //up down
+	float left_wheel_f = 0;
+	float right_wheel_f = 0;
+	int left_wheel_i = 0;
+	int right_wheel_i = 0;
 
 	while(ros::ok())
 	{	/*	
 		for(int i=0; i<NUMBER_MOTORS_BASE; i++)
 		{
-			motorCmd_ma.motorCmd[i].nodeID = i+1;
-			motorCmd_ma.motorCmd[i].mode = NO_MODE; //VELOCITY_MODE;
-			motorCmd_ma.motorCmd[i].value = 0;
+			motor_cmd_array.motor_cmd[i].node_id = i+1;
+			motor_cmd_array.motor_cmd[i].mode = NO_MODE; //VELOCITY_MODE;
+			motor_cmd_array.motor_cmd[i].value = 0;
 		}*/
 
 		ros::spinOnce();
@@ -167,36 +167,36 @@ int main (int argc, char** argv)
 		{
 			//ROS_INFO("srv ON");
 
-			if(objectCoords_arrived)
+			if(object_coords_arrived)
 			{			
 				//to drive the mobile base, 2 wheels //vel from 0 to 5000			
 				//use object coords and size in the image to simulate a joystick motion, then use the same code as for the XBox Controller
-				baseLR_f = ((-(float)(objectCoords.data[0])/640) + 1)/2;//xboxJoy.axes[3]; //left right
-				baseUD_f = (-(float)(objectCoords.data[2])/250) + 1;//xboxJoy.axes[4]; //up down
+				base_lr_f = ((-(float)(object_coords.data[0])/640) + 1)/2;//xboxJoy.axes[3]; //left right
+				base_ud_f = (-(float)(object_coords.data[2])/250) + 1;//xboxJoy.axes[4]; //up down
 
-				//ROS_INFO("LR=%f, UD=%f", baseLR_f, baseUD_f);
+				//ROS_INFO("LR=%f, UD=%f", base_lr_f, base_ud_f);
 							
-				leftWheel_f = -(baseLR_f - baseUD_f)*1000;
-				rightWheel_f = (baseLR_f + baseUD_f)*1000;
+				left_wheel_f = -(base_lr_f - base_ud_f)*1000;
+				right_wheel_f = (base_lr_f + base_ud_f)*1000;
 
-				leftWheel_i = (int)leftWheel_f;
-				rightWheel_i = (int)rightWheel_f;
+				left_wheel_i = (int)left_wheel_f;
+				right_wheel_i = (int)right_wheel_f;
 			
-				motorCmd_ma.motorCmd[0].command = SET_TARGET_VELOCITY;
-				motorCmd_ma.motorCmd[1].command = SET_TARGET_VELOCITY;
-				motorCmd_ma.motorCmd[0].value = rightWheel_i;
-				motorCmd_ma.motorCmd[1].value = leftWheel_i;
+				motor_cmd_array.motor_cmd[0].command = SET_TARGET_VELOCITY;
+				motor_cmd_array.motor_cmd[1].command = SET_TARGET_VELOCITY;
+				motor_cmd_array.motor_cmd[0].value = right_wheel_i;
+				motor_cmd_array.motor_cmd[1].value = left_wheel_i;
 
-				//objectCoords_arrived = false;		
+				//object_coords_arrived = false;
 			}
 			else
 			{
 				//ROS_INFO("no joy");
 				//STOP base motors	
-				motorCmd_ma.motorCmd[0].command = SET_CURRENT_MODE_SETTING_VALUE;
-				motorCmd_ma.motorCmd[1].command = SET_CURRENT_MODE_SETTING_VALUE;
-				motorCmd_ma.motorCmd[0].value = 0;
-				motorCmd_ma.motorCmd[1].value = 0;
+				motor_cmd_array.motor_cmd[0].command = SET_CURRENT_MODE_SETTING_VALUE;
+				motor_cmd_array.motor_cmd[1].command = SET_CURRENT_MODE_SETTING_VALUE;
+				motor_cmd_array.motor_cmd[0].value = 0;
+				motor_cmd_array.motor_cmd[1].value = 0;
 			}
 
 			
