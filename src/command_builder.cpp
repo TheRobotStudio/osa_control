@@ -73,15 +73,15 @@ void resetMotorCmdMultiArray()
 void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
 	//#ifdef TRS_DEBUG
-	ROS_INFO("Motor commands received");
+	//ROS_INFO("Motor commands received");
 	//#endif
 
-	ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
+	//ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
 
 	//for(int i=0; i<cmds->layout.dim[0].stride; i++)
 	for(int i=0; i<DOFS; i++)
 	{
-		ROS_INFO("EPOS[%d]", i);
+		//ROS_INFO("EPOS[%d]", i);
 
 		//int i = cmds->motor_cmd[i].node_id - 1; //(cmds->motor_cmd[i].slaveBoardID - 1)*NUMBER_MAX_EPOS2_PER_SLAVE + (cmds->motor_cmd[i].node_id - 1);
 
