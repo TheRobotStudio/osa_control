@@ -72,12 +72,16 @@ void resetMotorCmdMultiArray()
  */
 void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
-	#ifdef TRS_DEBUG
+	//#ifdef TRS_DEBUG
 	ROS_INFO("Motor commands received");
-	#endif
+	//#endif
+
+	ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
 
 	for(int i=0; i<cmds->layout.dim[0].stride; i++)
 	{
+		ROS_INFO("EPOS[%d]", i);
+
 		//int i = cmds->motor_cmd[i].node_id - 1; //(cmds->motor_cmd[i].slaveBoardID - 1)*NUMBER_MAX_EPOS2_PER_SLAVE + (cmds->motor_cmd[i].node_id - 1);
 
 		motor_cmd_array.motor_cmd[i].node_id = cmds->motor_cmd[i].node_id;
@@ -268,6 +272,7 @@ int main(int argc, char** argv)
     	sub_setSBCommands[i] = nh.subscribe("/setSBCommands", 1, setSBCommands_cb);
     }
 */
+
     ros::Subscriber sub_set_motor_commands = nh.subscribe("/set_motor_commands", 1, setMotorCommandsCallback);
 
 	//Publishers
@@ -284,6 +289,8 @@ int main(int argc, char** argv)
 	motor_cmd_array.motor_cmd.clear();
 	motor_cmd_array.motor_cmd.resize(DOFS); //NUMBER_SLAVE_BOARDS*NUMBER_MAX_EPOS2_PER_SLAVE);
 
+	ROS_INFO("Main loop");
+
 	while(ros::ok())
 	{
 		resetMotorCmdMultiArray(); //reset cmd set, and write the correct nodeIDs with slave Nb offset
@@ -299,4 +306,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
