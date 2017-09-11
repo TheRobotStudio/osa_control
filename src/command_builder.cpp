@@ -78,7 +78,8 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 
 	ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
 
-	for(int i=0; i<cmds->layout.dim[0].stride; i++)
+	//for(int i=0; i<cmds->layout.dim[0].stride; i++)
+	for(int i=0; i<DOFS; i++)
 	{
 		ROS_INFO("EPOS[%d]", i);
 
