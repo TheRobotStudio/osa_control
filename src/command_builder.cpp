@@ -73,7 +73,7 @@ void resetMotorCmdMultiArray()
 void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
 	//#ifdef TRS_DEBUG
-	ROS_INFO("Motor commands received");
+	//ROS_INFO("Motor commands received");
 	//#endif
 
 	//ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
