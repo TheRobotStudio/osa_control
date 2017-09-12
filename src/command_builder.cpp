@@ -73,7 +73,7 @@ void resetMotorCmdMultiArray()
 void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
 	//#ifdef TRS_DEBUG
-	//ROS_INFO("Motor commands received");
+	ROS_INFO("Motor commands received");
 	//#endif
 
 	//ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
@@ -189,8 +189,8 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			profileVelocityCmdStep[i] = 0; //reset to 0 after the new velocity has been applied
 			cmdIgnored[i] = true;
 
-			//ROS_INFO("motor[%d][%d] - Profile Velocity [%d] - set the controlword bit",
-					//motor_cmd_array.motor_cmd[i].slaveBoardID, motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].command);
+			ROS_INFO("motor[%d] - Profile Velocity [%d] - set the controlword bit",
+					motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].command);
 		}
 		else // == 0
 		{
@@ -200,8 +200,8 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 				motor_cmd_array.motor_cmd[i].value = cmds->motor_cmd[i].value;
 				profileVelocityCmdStep[i] = 1;
 
-				//ROS_INFO("motor[%d][%d] - Profile Velocity [%d] - send target velocity [%d]",
-						//motor_cmd_array.motor_cmd[i].slaveBoardID, motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].command, motor_cmd_array.motor_cmd[i].value);
+				ROS_INFO("motor[%d] - Profile Velocity [%d] - send target velocity [%d]",
+						motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].command, motor_cmd_array.motor_cmd[i].value);
 			}
 
 			cmdIgnored[i] = false;
