@@ -49,8 +49,9 @@ osa_msgs::MotorCmdMultiArray motor_cmd_array;
 
 bool cmdIgnored[DOFS] = {false};
 int modeOfOperation[DOFS] = {NO_MODE};
-int profilePositionCmdStep[DOFS] = {0}; //every Profile Position command is followed by a rising edge on the controlword
-int profileVelocityCmdStep[DOFS] = {0}; //every Profile Velocity command is followed by setting the controlword
+int mapIndexNodeID[DOFS] = {0}; // Maps the array index with the actual NodeID on the CAN bus.
+int profilePositionCmdStep[DOFS] = {0}; // Every Profile Position command is followed by a rising edge on the controlword.
+int profileVelocityCmdStep[DOFS] = {0}; // Every Profile Velocity command is followed by setting the controlword.
 
 /*! \fn void resetMotorCmdMultiArray()
  *  \brief
@@ -113,12 +114,14 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			//check if Profile Position mode is activated
 			if(modeOfOperation[i] == PROFILE_POSITION_MODE)
 			{
+				motor_cmd_array.motor_cmd[i].node_id =  mapIndexNodeID[i];
 				motor_cmd_array.motor_cmd[i].command = SET_CONTROLWORD;
 				motor_cmd_array.motor_cmd[i].value = 0x002F;
 				profilePositionCmdStep[i] = 3; //jump to step 3 to send the upper state
 			}
 			else
 			{
+				motor_cmd_array.motor_cmd[i].node_id =  mapIndexNodeID[i];
 				motor_cmd_array.motor_cmd[i].command = SET_MODES_OF_OPERATION;
 				motor_cmd_array.motor_cmd[i].value = PROFILE_POSITION_MODE;
 				profilePositionCmdStep[i] = 2; //increase to send the upper state
@@ -129,6 +132,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 		}
 		else if(profilePositionCmdStep[i] == 2) //send the lower state of the controlword bit
 		{
+			motor_cmd_array.motor_cmd[i].node_id =  mapIndexNodeID[i];
 			motor_cmd_array.motor_cmd[i].command = SET_CONTROLWORD;
 			motor_cmd_array.motor_cmd[i].value = 0x002F;
 			profilePositionCmdStep[i] = 3; //increase to send the upper state
@@ -139,6 +143,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 		}
 		else if(profilePositionCmdStep[i] == 3) //send the lower state of the controlword bit
 		{
+			motor_cmd_array.motor_cmd[i].node_id =  mapIndexNodeID[i];
 			motor_cmd_array.motor_cmd[i].command = SET_CONTROLWORD;
 			motor_cmd_array.motor_cmd[i].value = 0x003F;
 			profilePositionCmdStep[i] = 0; //reset to 0 after the new position has been applied
@@ -151,6 +156,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 		{
 			if(cmds->motor_cmd[i].command == SET_TARGET_POSITION)
 			{
+				mapIndexNodeID[i] = motor_cmd_array.motor_cmd[i].node_id; // Save the NodeID for later steps.
 				motor_cmd_array.motor_cmd[i].command = cmds->motor_cmd[i].command;
 				motor_cmd_array.motor_cmd[i].value = cmds->motor_cmd[i].value;
 				profilePositionCmdStep[i] = 1;
@@ -168,12 +174,14 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			//check if Profile Velocity mode is activated
 			if(modeOfOperation[i] == PROFILE_VELOCITY_MODE)
 			{
+				motor_cmd_array.motor_cmd[i].node_id =  mapIndexNodeID[i];
 				motor_cmd_array.motor_cmd[i].command = SET_CONTROLWORD;
 				motor_cmd_array.motor_cmd[i].value = 0x000F;
 				profileVelocityCmdStep[i] = 0; //reset to 0 after the new velocity has been applied
 			}
 			else
 			{
+				motor_cmd_array.motor_cmd[i].node_id =  mapIndexNodeID[i];
 				motor_cmd_array.motor_cmd[i].command = SET_MODES_OF_OPERATION;
 				motor_cmd_array.motor_cmd[i].value = PROFILE_VELOCITY_MODE;
 				profileVelocityCmdStep[i] = 2; //increase to send the controlword
@@ -184,6 +192,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 		}
 		else if(profileVelocityCmdStep[i] == 2) //set the controlword bit
 		{
+			motor_cmd_array.motor_cmd[i].node_id =  mapIndexNodeID[i];
 			motor_cmd_array.motor_cmd[i].command = SET_CONTROLWORD;
 			motor_cmd_array.motor_cmd[i].value = 0x000F;
 			profileVelocityCmdStep[i] = 0; //reset to 0 after the new velocity has been applied
@@ -196,6 +205,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 		{
 			if(cmds->motor_cmd[i].command == SET_TARGET_VELOCITY)
 			{
+				mapIndexNodeID[i] = motor_cmd_array.motor_cmd[i].node_id; // Save the NodeID for later steps.
 				motor_cmd_array.motor_cmd[i].command = cmds->motor_cmd[i].command;
 				motor_cmd_array.motor_cmd[i].value = cmds->motor_cmd[i].value;
 				profileVelocityCmdStep[i] = 1;
