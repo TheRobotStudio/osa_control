@@ -142,13 +142,13 @@ int main(int argc, char** argv)
 					ROS_ERROR("Can't grab param type for %s", dof_idx_path.str().c_str());
 					return false;
 				}
-
+/*
 				//check that the type is "WHEEL"
 				if(type[i] == std::string("WHEEL"))
 				{
 					throw std::runtime_error("Selected DOF is not of type WHEEL.");
 				}
-
+*/
 				//node_id
 				std::ostringstream node_id_path;
 				node_id_path << absolute_str << "/node_id";
