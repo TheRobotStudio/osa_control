@@ -59,6 +59,8 @@
 #define LOOP_RATE	HEART_BEAT
 #define NUMBER_OF_WHEELS	2
 
+using namespace std;
+
 /*** Variables ***/
 bool joy_arrived = false;
 sensor_msgs::Joy xbox_joy;
@@ -81,22 +83,25 @@ int main(int argc, char** argv)
 	ros::Rate r(LOOP_RATE);
 
 	// Parameters
-	std::string dof_wheel_name[NUMBER_OF_WHEELS];
+	string dof_wheel_name[NUMBER_OF_WHEELS];
 	int joy_axis_left_right_idx, joy_axis_up_down_idx;
 
+	ROS_INFO("OSA Tank Drive node.");
+
+	ROS_INFO("Grab the parameters.");
 	// Grab the parameters
-	nh.param("dof_right_wheel", dof_wheel_name[0], std::string("/dof1"));
-	nh.param("dof_left_wheel", dof_wheel_name[1], std::string("/dof2"));
+	nh.param("dof_right_wheel", dof_wheel_name[0], string("/dof1"));
+	nh.param("dof_left_wheel", dof_wheel_name[1], string("/dof2"));
 	nh.param("joy_axis_left_right", joy_axis_left_right_idx, 3);
 	nh.param("joy_axis_up_down", joy_axis_up_down_idx, 4);
 
-	std:: string name[NUMBER_OF_WHEELS];
-	std:: string type[NUMBER_OF_WHEELS];
+	string name[NUMBER_OF_WHEELS];
+	string type[NUMBER_OF_WHEELS];
 	int node_id[NUMBER_OF_WHEELS] = {0};
-	std:: string controller[NUMBER_OF_WHEELS];
-	std:: string motor[NUMBER_OF_WHEELS];
+	string controller[NUMBER_OF_WHEELS];
+	string motor[NUMBER_OF_WHEELS];
 	bool inverted[NUMBER_OF_WHEELS];
-	std:: string mode[NUMBER_OF_WHEELS];
+	string mode[NUMBER_OF_WHEELS];
 	int value[NUMBER_OF_WHEELS] = {0};
 
 	//Publishers
@@ -109,24 +114,24 @@ int main(int argc, char** argv)
 	{
 		//start with controller 1
 		//int dof_idx = 1;
-		//std::string rad_str = "dof"; //common radical name
+		//string rad_str = "dof"; //common radical name
 
 		for(int i=0; i<NUMBER_OF_WHEELS; i++)
 		{
 			//create the string "controller+index" to search for the controller parameter with that index number
-			std::ostringstream dof_idx_path;
+			ostringstream dof_idx_path;
 			dof_idx_path << dof_wheel_name[i]; //rad_str << dof_idx;
 
-			std::string absolute_str = "absolute_str";
+			string absolute_str = "absolute_str";
 
-			//ROS_INFO("string=%s", dof_idx_path.str().c_str());
+			ROS_INFO("string=%s", dof_idx_path.str().c_str());
 
 			if(nh.searchParam(dof_idx_path.str(), absolute_str))
 			{
 				//grab the parameters of the current controller
 
 				//name
-				std::ostringstream name_path;
+				ostringstream name_path;
 				name_path << absolute_str << "/name";
 				if(!nh.getParam(name_path.str(), name[i]))
 				{
@@ -135,7 +140,7 @@ int main(int argc, char** argv)
 				}
 
 				//type
-				std::ostringstream type_path;
+				ostringstream type_path;
 				type_path << absolute_str << "/type";
 				if(!nh.getParam(type_path.str(), type[i]))
 				{
@@ -144,13 +149,13 @@ int main(int argc, char** argv)
 				}
 /*
 				//check that the type is "WHEEL"
-				if(type[i] == std::string("WHEEL"))
+				if(type[i] == string("WHEEL"))
 				{
-					throw std::runtime_error("Selected DOF is not of type WHEEL.");
+					throw runtime_error("Selected DOF is not of type WHEEL.");
 				}
 */
 				//node_id
-				std::ostringstream node_id_path;
+				ostringstream node_id_path;
 				node_id_path << absolute_str << "/node_id";
 				if(!nh.getParam(node_id_path.str(), node_id[i]))
 				{
@@ -159,7 +164,7 @@ int main(int argc, char** argv)
 				}
 
 				//controller
-				std::ostringstream controller_path;
+				ostringstream controller_path;
 				controller_path << absolute_str << "/controller";
 				if(!nh.getParam(controller_path.str(), controller[i]))
 				{
@@ -168,7 +173,7 @@ int main(int argc, char** argv)
 				}
 
 				//motor
-				std::ostringstream motor_path;
+				ostringstream motor_path;
 				motor_path << absolute_str << "/motor";
 				if(!nh.getParam(motor_path.str(), motor[i]))
 				{
@@ -177,7 +182,7 @@ int main(int argc, char** argv)
 				}
 
 				//inverted
-				std::ostringstream inverted_path;
+				ostringstream inverted_path;
 				inverted_path << absolute_str << "/inverted";
 				if(!nh.getParam(inverted_path.str(), inverted[i]))
 				{
@@ -186,7 +191,7 @@ int main(int argc, char** argv)
 				}
 
 				//mode
-				std::ostringstream mode_path;
+				ostringstream mode_path;
 				mode_path << absolute_str << "/mode";
 				if(!nh.getParam(mode_path.str(), mode[i]))
 				{
@@ -195,7 +200,7 @@ int main(int argc, char** argv)
 				}
 
 				//value
-				std::ostringstream value_path;
+				ostringstream value_path;
 				value_path << absolute_str << "/value";
 				if(!nh.getParam(value_path.str(), value[i]))
 				{
@@ -210,7 +215,7 @@ int main(int argc, char** argv)
 			else
 			{
 				//dof_exist = false;
-				//ROS_INFO("No more controllers found in YAML config file");
+				ROS_WARN("Controllers not found in YAML config file");
 			}
 
 			//dof_exist = false;
