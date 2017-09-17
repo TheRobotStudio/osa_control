@@ -103,6 +103,7 @@ add_executable(osa_arm_manual src/arm_manual.cpp)
 add_executable(osa_mobile_base_manual src/mobile_base_manual.cpp) 
 add_executable(osa_mobile_base_follower src/mobile_base_follower.cpp) 
 add_executable(osa_base_test_modes src/base_test_modes.cpp)
+add_executable(osa_tank_drive src/tank_drive.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -110,6 +111,7 @@ add_dependencies(osa_arm_manual osa_control_generate_messages_cpp)
 add_dependencies(osa_mobile_base_manual osa_control_generate_messages_cpp)
 add_dependencies(osa_mobile_base_follower osa_control_generate_messages_cpp)
 add_dependencies(osa_xbox_joy_conductor osa_control_generate_messages_cpp)
+add_dependencies(osa_tank_drive osa_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
@@ -119,6 +121,7 @@ target_link_libraries(osa_base_test_modes ${catkin_LIBRARIES} ${Eigen_INCLUDE_DI
 target_link_libraries(osa_arm_manual ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_mobile_base_manual ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_mobile_base_follower ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_tank_drive ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 
 #############
 ## Install ##

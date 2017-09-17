@@ -1,0 +1,19 @@
+<launch>
+	<node name="osa_joy_node" pkg="joy" type="joy_node" respawn="true">
+		<param name="dev" type="string" value="/dev/input/js0" />
+		<remap from="joy" to="joy0"/>
+	</node>
+	<node name="osa_tank_drive_node" pkg="osa_control" type="osa_tank_drive" respawn="true">
+		<param name="dof_right_wheel" type="string" value="dof1" />
+		<param name="dof_left_wheel" type="string" value="dof2" />
+		
+		<param name="joy_axis_left_right" type="int" value="3" />
+		<param name="joy_axis_up_down" type="int" value="4" />
+		
+		<!-- remap from="dof_right_wheel" to="dof1"/ -->
+		<!-- remap from=dof_left_wheel to="dof2"/ -->
+		
+		<remap from="joy" to="joy0"/>
+	</node>
+</launch>
+
