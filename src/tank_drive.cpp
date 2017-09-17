@@ -69,6 +69,8 @@ osa_msgs::MotorCmdMultiArray motor_cmd_array;
 /*** Callback functions ***/
 void joyCallback(const sensor_msgs::JoyConstPtr& joy)
 {
+	//ROS_INFO("joycallback");
+
 	xbox_joy = *joy;
 	joy_arrived = true;
 }
@@ -259,8 +261,12 @@ int main(int argc, char** argv)
 			motor_cmd_array.motor_cmd[i].value = 0;
 		}
 
+		ros::spinOnce();
+
 		if(joy_arrived)
 		{
+			//ROS_INFO("joy received");
+
 				base_lr_f = xbox_joy.axes[joy_axis_left_right_idx]/4; //left right
 				base_ud_f = xbox_joy.axes[joy_axis_up_down_idx]; //up down
 
