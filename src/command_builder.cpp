@@ -102,8 +102,8 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 
 	//ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
 
-	//for(int i=0; i<cmds->layout.dim[0].stride; i++)
-	for(int i=0; i<number_epos_boards_; i++)
+	for(int i=0; i<cmds->layout.dim[0].stride; i++)
+	//for(int i=0; i<number_epos_boards_; i++)
 	{
 		//ROS_INFO("EPOS[%d]", i);
 
@@ -161,8 +161,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			profilePositionCmdStep[i] = 3; //increase to send the upper state
 			cmdIgnored[i] = true;
 
-			//ROS_INFO("motor[%d][%d] - Profile Position - send the lower state of the controlword bit",
-					//motor_cmd_array.motor_cmd[i].slaveBoardID, motor_cmd_array.motor_cmd[i].node_id);
+			ROS_INFO("motor[%d] - Profile Position - send the lower state of the controlword bit", motor_cmd_array.motor_cmd[i].node_id);
 		}
 		else if(profilePositionCmdStep[i] == 3) //send the lower state of the controlword bit
 		{
@@ -172,8 +171,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			profilePositionCmdStep[i] = 0; //reset to 0 after the new position has been applied
 			cmdIgnored[i] = true;
 
-			//ROS_INFO("motor[%d][%d] - Profile Position - send the upper state of the controlword bit",
-					//motor_cmd_array.motor_cmd[i].slaveBoardID, motor_cmd_array.motor_cmd[i].node_id);
+			ROS_INFO("motor[%d] - Profile Position - send the upper state of the controlword bit", motor_cmd_array.motor_cmd[i].node_id);
 		}
 		else // == 0
 		{
@@ -184,8 +182,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 				motor_cmd_array.motor_cmd[i].value = cmds->motor_cmd[i].value;
 				profilePositionCmdStep[i] = 1;
 
-				//ROS_INFO("motor[%d][%d] - Profile Position - send target position [%d]",
-						//motor_cmd_array.motor_cmd[i].slaveBoardID, motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].value);
+				ROS_INFO("motor[%d] - Profile Position - send target position [%d]", motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].value);
 			}
 
 			cmdIgnored[i] = false;
