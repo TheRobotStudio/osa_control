@@ -1,0 +1,16 @@
+<launch>
+
+	<!-- Razor IMU 9DOF node -->
+	<node name="razor_USB0_node" pkg="razor_imu_9dof" type="imu_node.py" output="screen" respawn="true">
+        <param name="device" type="string" value="/dev/ttyUSB0" />
+	    <remap from="imuRaw" to="imu_raw_0"/>
+    </node>
+    
+    <!-- High Speed Android balance node -->
+	<node name="osa_hsa_balance_node" pkg="osa_control" type="osa_hsa_balance" respawn="true">
+		<param name="dof_right_wheel" type="string" value="dof1" />
+		<param name="dof_left_wheel" type="string" value="dof2" />			
+		<remap from="imuRaw" to="imu_raw_0"/>
+	</node>
+	
+</launch>

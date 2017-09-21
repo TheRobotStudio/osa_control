@@ -25,11 +25,12 @@
  */
 
 /**
- * @file tank_drive.cpp
+ * @file hsa_balance.cpp
  * @author Cyril Jourdan
+ * @author Rob Knight
  * @date Sept 18, 2017
  * @version 0.1.0
- * @brief Implementation file for class TankDrive
+ * @brief Implementation file for the High Speed Android balance algorithm
  *
  * Contact: cyril.jourdan@therobotstudio.com
  * Created on : Sept 18, 2017
@@ -39,63 +40,57 @@
 #include <stdexcept>
 //ROS
 #include <ros/ros.h>
-//#include <ros/package.h>
 //ROS messages
-#include <sensor_msgs/Joy.h>
+#include <razor_imu_9dof/RazorImu.h>
 #include <osa_msgs/MotorCmdMultiArray.h>
 #include <osa_msgs/MotorDataMultiArray.h>
-#include <std_msgs/Int32MultiArray.h>
-#include <std_msgs/Int16MultiArray.h>
-//#include <std_msgs/Bool.h>
-//ROS services
-#include "osa_control/switchNode.h"
-#include "osa_control/getSlaveCmdArray.h"
-//other
-//#include <stdio.h>
-//ROS packages include 
-#include "robot_defines.h"
+//#include <std_msgs/Int32MultiArray.h>
+//#include <std_msgs/Int16MultiArray.h>
 
 /*** Defines ***/
-#define LOOP_RATE	HEART_BEAT
+#define LOOP_RATE	15 //HEART_BEAT
 #define NUMBER_OF_WHEELS	2
 
 using namespace std;
 
-/*** Variables ***/
-bool joy_arrived = false;
-sensor_msgs::Joy xbox_joy;
+/*** Global variables ***/
+razor_imu_9dof::RazorImu razorImu;
+osa_msgs::MotorDataMultiArray motor_data_array;
 osa_msgs::MotorCmdMultiArray motor_cmd_array;
+bool imu_arrived = false;
+bool motor_data_array_arrived = true;
 
 /*** Callback functions ***/
-void joyCallback(const sensor_msgs::JoyConstPtr& joy)
+void imuRawCallback(const razor_imu_9dof::RazorImuConstPtr& imu)
 {
-	//ROS_INFO("joycallback");
+	razorImu = *imu;
+	imu_arrived = true;
+}
 
-	xbox_joy = *joy;
-	joy_arrived = true;
+void motorDataMultiArray_cb(const osa_msgs::MotorDataMultiArrayConstPtr& data)
+{
+	motor_data_array = *data;
+	motor_data_array_arrived = true;
 }
 
 /*** Main ***/
 int main(int argc, char** argv)
 {
 	//Initialize ROS
-	ros::init(argc, argv, "osa_tank_drive_node");
+	ros::init(argc, argv, "osa_hsa_balance_node");
 	ros::NodeHandle nh("~");
 
 	ros::Rate r(LOOP_RATE);
 
 	// Parameters
 	string dof_wheel_name[NUMBER_OF_WHEELS];
-	int joy_axis_left_right_idx, joy_axis_up_down_idx;
 
-	ROS_INFO("OSA Tank Drive node.");
+	ROS_INFO("OSA High Speed Android balance node.");
 
 	ROS_INFO("Grab the parameters.");
 	// Grab the parameters
 	nh.param("dof_right_wheel", dof_wheel_name[0], string("/dof1"));
 	nh.param("dof_left_wheel", dof_wheel_name[1], string("/dof2"));
-	nh.param("joy_axis_left_right", joy_axis_left_right_idx, 3);
-	nh.param("joy_axis_up_down", joy_axis_up_down_idx, 4);
 
 	string name[NUMBER_OF_WHEELS];
 	string type[NUMBER_OF_WHEELS];
@@ -109,7 +104,8 @@ int main(int argc, char** argv)
 	//Publishers
 	ros::Publisher pub_motor_cmd_array = nh.advertise<osa_msgs::MotorCmdMultiArray>("/set_motor_commands", 100);
 	//Subscribers
-	ros::Subscriber sub_joy = nh.subscribe ("/joy", 10, joyCallback);
+	ros::Subscriber sub_imu = nh.subscribe ("/imuRaw", 10, imuRawCallback);
+	ros::Subscriber sub_motor_data_array = nh.subscribe("/motor_data_array", 10, motorDataArrayCallback);
 	
 	// Grab the parameters
 	try
@@ -234,7 +230,7 @@ int main(int argc, char** argv)
 		return false;
 	}
 
-	//create the commands multi array
+	//create the command array
 	motor_cmd_array.layout.dim.push_back(std_msgs::MultiArrayDimension());
 	motor_cmd_array.layout.dim[0].size = NUMBER_OF_WHEELS;
 	motor_cmd_array.layout.dim[0].stride = NUMBER_OF_WHEELS;
@@ -243,47 +239,36 @@ int main(int argc, char** argv)
 	motor_cmd_array.motor_cmd.clear();
 	motor_cmd_array.motor_cmd.resize(NUMBER_OF_WHEELS);
 
-	float base_lr_f = 0; //left right
-	float base_ud_f = 0; //up down
-	float left_wheel_f = 0;
-	float right_wheel_f = 0;
-	int left_wheel_i = 0;
-	int right_wheel_i = 0;
+	//Initialization
+	for(int i=0; i<NUMBER_OF_WHEELS; i++)
+	{
+		motor_cmd_array.motor_cmd[i].node_id = node_id[i];
+		motor_cmd_array.motor_cmd[i].command = SET_TARGET_VELOCITY;
+		motor_cmd_array.motor_cmd[i].value = 0;
+	}
 
+	/* Main loop */
 	while(ros::ok())
 	{
-		//Default base value
-		for(int i=0; i<NUMBER_OF_WHEELS; i++)
-		{
-			//motor_cmd_array.motor_cmd[i].slaveBoardID = BIBOT_BASE_SLAVEBOARD_ID;
-			motor_cmd_array.motor_cmd[i].node_id = node_id[i];
-			motor_cmd_array.motor_cmd[i].command = SET_TARGET_VELOCITY;
-			motor_cmd_array.motor_cmd[i].value = 0;
-		}
-
+		// Get imu and motor data through callbacks.
 		ros::spinOnce();
 
-		if(joy_arrived)
+		// Check that both imu and motor data has arrived.
+		if(imu_arrived && motor_data_array_arrived)
 		{
-			//ROS_INFO("joy received");
+			//--------------------- PID loop ---------------------
 
-			base_lr_f = xbox_joy.axes[joy_axis_left_right_idx]/4; //left right
-			base_ud_f = xbox_joy.axes[joy_axis_up_down_idx]; //up down
 
-			left_wheel_f = -(base_lr_f - base_ud_f)*2000;
-			right_wheel_f = (base_lr_f + base_ud_f)*2000;
 
-			left_wheel_i = (int)left_wheel_f;
-			right_wheel_i = (int)right_wheel_f;
+			// Set final motor velocity
+			motor_cmd_array.motor_cmd[0].value =  0;
+			motor_cmd_array.motor_cmd[1].value = 0;
 
-			motor_cmd_array.motor_cmd[0].command = SET_TARGET_VELOCITY;
-			motor_cmd_array.motor_cmd[1].command = SET_TARGET_VELOCITY;
-			motor_cmd_array.motor_cmd[0].value =  left_wheel_i;
-			motor_cmd_array.motor_cmd[1].value = right_wheel_i;
-
+			// Publish the motor commands topic, caught by the command_builder node
+			// which send it to the CAN bus via topic_to_socketcan_node
 			pub_motor_cmd_array.publish(motor_cmd_array);
 		}
-		
+
 		r.sleep();
 	}//while ros ok
 
