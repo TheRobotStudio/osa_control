@@ -45,8 +45,8 @@
 #include <razor_imu_9dof/RazorImu.h>
 #include <osa_msgs/MotorCmdMultiArray.h>
 #include <osa_msgs/MotorDataMultiArray.h>
-//#include <std_msgs/Int32MultiArray.h>
-//#include <std_msgs/Int16MultiArray.h>
+
+#include "robot_defines.h"
 
 /*** Defines ***/
 #define LOOP_RATE	15 //HEART_BEAT
@@ -56,7 +56,7 @@ using namespace std;
 
 /*** Global variables ***/
 sensor_msgs::Joy xbox_joy;
-razor_imu_9dof::RazorImu razorImu;
+razor_imu_9dof::RazorImu razor_imu;
 osa_msgs::MotorDataMultiArray motor_data_array;
 osa_msgs::MotorCmdMultiArray motor_cmd_array;
 bool joy_arrived = false;
@@ -66,17 +66,17 @@ bool motor_data_array_arrived = true;
 /*** Callback functions ***/
 void joyCallback(const sensor_msgs::JoyConstPtr& joy)
 {
-        xbox_joy = *joy;
-        joy_arrived = true;
+	xbox_joy = *joy;
+	joy_arrived = true;
 }
 
 void imuRawCallback(const razor_imu_9dof::RazorImuConstPtr& imu)
 {
-	razorImu = *imu;
+	razor_imu = *imu;
 	imu_arrived = true;
 }
 
-void motorDataMultiArray_cb(const osa_msgs::MotorDataMultiArrayConstPtr& data)
+void motorDataArrayCallback(const osa_msgs::MotorDataMultiArrayConstPtr& data)
 {
 	motor_data_array = *data;
 	motor_data_array_arrived = true;
@@ -98,11 +98,19 @@ int main(int argc, char** argv)
 	ROS_INFO("OSA High Speed Android balance node.");
 
 	ROS_INFO("Grab the parameters.");
+
 	// Grab the parameters
-	nh.param("dof_right_wheel", dof_wheel_name[0], string("/dof1"));
-	nh.param("dof_left_wheel", dof_wheel_name[1], string("/dof2"));
-	nh.param("joy_axis_left_right", joy_axis_left_right_idx, 3);
-        nh.param("joy_axis_up_down", joy_axis_up_down_idx, 4);
+	try
+	{
+		nh.param("dof_right_wheel", dof_wheel_name[0], string("/dof1"));
+		nh.param("dof_left_wheel", dof_wheel_name[1], string("/dof2"));
+		nh.param("joy_axis_left_right", joy_axis_left_right_idx, 3);
+		nh.param("joy_axis_up_down", joy_axis_up_down_idx, 4);
+	}
+	catch(ros::InvalidNameException const &e)
+	{
+		ROS_ERROR(e.what());
+	}
 
 	string name[NUMBER_OF_WHEELS];
 	string type[NUMBER_OF_WHEELS];
@@ -234,9 +242,9 @@ int main(int argc, char** argv)
 
 		ROS_INFO("Wheels parameters found successfully!\n");
 	}
-	catch(int exception)
+	catch(ros::InvalidNameException const &e)
 	{
-		//ROS_ERROR(exception.what());
+		ROS_ERROR(e.what());
 		ROS_ERROR("Wrong parameters in config file or launch file!");
 		ROS_ERROR("Please modify your YAML config file or launch file and try again.");
 
@@ -261,21 +269,40 @@ int main(int argc, char** argv)
 	}
 
 	/* Main loop */
+	ROS_INFO("Main loop");
+
 	while(ros::ok())
 	{
 		// Get imu and motor data through callbacks.
 		ros::spinOnce();
 
+		if(joy_arrived)
+		{
+			// Joystick control
+			//xbox_joy.buttons[0];
+			//xbox_joy.axes[0];
+		}
+
 		// Check that both imu and motor data has arrived.
 		if(imu_arrived && motor_data_array_arrived)
 		{
 			//--------------------- PID loop ---------------------
+			// Variables
+			float angle = razor_imu.pitch; //in rad
+			float velocity_f = 0.0;
+			int velocity_i = 0;
+			float dt = 1/LOOP_RATE;
 
+			// Computation
+			velocity_f = (angle*4000)/M_PI;
+			velocity_i = (int)velocity_f;
 
+			// Print velocity value
+			ROS_INFO("angle = %f, velocity = %d", angle, velocity_i);
 
 			// Set final motor velocity
-			motor_cmd_array.motor_cmd[0].value =  0;
-			motor_cmd_array.motor_cmd[1].value = 0;
+			motor_cmd_array.motor_cmd[0].value = velocity_i;
+			motor_cmd_array.motor_cmd[1].value = velocity_i;
 
 			// Publish the motor commands topic, caught by the command_builder node
 			// which send it to the CAN bus via topic_to_socketcan_node
