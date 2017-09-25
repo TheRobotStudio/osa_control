@@ -294,7 +294,7 @@ int main(int argc, char** argv)
 			float dt = 1/LOOP_RATE;
 
 			// Computation
-			velocity_f = (angle*4000)/M_PI;
+			velocity_f = -(angle*4000)/M_PI;
 			velocity_i = (int)velocity_f;
 
 			// Print velocity value
