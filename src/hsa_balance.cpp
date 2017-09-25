@@ -41,6 +41,7 @@
 //ROS
 #include <ros/ros.h>
 //ROS messages
+#include <sensor_msgs/Joy.h>
 #include <razor_imu_9dof/RazorImu.h>
 #include <osa_msgs/MotorCmdMultiArray.h>
 #include <osa_msgs/MotorDataMultiArray.h>
@@ -54,13 +55,21 @@
 using namespace std;
 
 /*** Global variables ***/
+sensor_msgs::Joy xbox_joy;
 razor_imu_9dof::RazorImu razorImu;
 osa_msgs::MotorDataMultiArray motor_data_array;
 osa_msgs::MotorCmdMultiArray motor_cmd_array;
+bool joy_arrived = false;
 bool imu_arrived = false;
 bool motor_data_array_arrived = true;
 
 /*** Callback functions ***/
+void joyCallback(const sensor_msgs::JoyConstPtr& joy)
+{
+        xbox_joy = *joy;
+        joy_arrived = true;
+}
+
 void imuRawCallback(const razor_imu_9dof::RazorImuConstPtr& imu)
 {
 	razorImu = *imu;
@@ -84,6 +93,7 @@ int main(int argc, char** argv)
 
 	// Parameters
 	string dof_wheel_name[NUMBER_OF_WHEELS];
+	int joy_axis_left_right_idx, joy_axis_up_down_idx;
 
 	ROS_INFO("OSA High Speed Android balance node.");
 
@@ -91,6 +101,8 @@ int main(int argc, char** argv)
 	// Grab the parameters
 	nh.param("dof_right_wheel", dof_wheel_name[0], string("/dof1"));
 	nh.param("dof_left_wheel", dof_wheel_name[1], string("/dof2"));
+	nh.param("joy_axis_left_right", joy_axis_left_right_idx, 3);
+        nh.param("joy_axis_up_down", joy_axis_up_down_idx, 4);
 
 	string name[NUMBER_OF_WHEELS];
 	string type[NUMBER_OF_WHEELS];
@@ -104,6 +116,7 @@ int main(int argc, char** argv)
 	//Publishers
 	ros::Publisher pub_motor_cmd_array = nh.advertise<osa_msgs::MotorCmdMultiArray>("/set_motor_commands", 100);
 	//Subscribers
+	ros::Subscriber sub_joy = nh.subscribe ("/joy", 10, joyCallback);
 	ros::Subscriber sub_imu = nh.subscribe ("/imuRaw", 10, imuRawCallback);
 	ros::Subscriber sub_motor_data_array = nh.subscribe("/motor_data_array", 10, motorDataArrayCallback);
 	
