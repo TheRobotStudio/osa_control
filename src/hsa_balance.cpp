@@ -40,6 +40,8 @@
 #include <stdexcept>
 //ROS
 #include <ros/ros.h>
+#include <dynamic_reconfigure/server.h>
+#include <osa_control/hsa_balance_dyn_Config.h>
 //ROS messages
 #include <sensor_msgs/Joy.h>
 #include <razor_imu_9dof/RazorImu.h>
@@ -55,6 +57,7 @@
 using namespace std;
 
 /*** Global variables ***/
+osa_control::hsa_balance_dyn_Config pid_param;
 sensor_msgs::Joy xbox_joy;
 razor_imu_9dof::RazorImu razor_imu;
 osa_msgs::MotorDataMultiArray motor_data_array;
@@ -64,6 +67,12 @@ bool imu_arrived = false;
 bool motor_data_array_arrived = true;
 
 /*** Callback functions ***/
+void HSABallanceDynCallback(osa_control::hsa_balance_dyn_Config &config, uint32_t level)
+{
+	ROS_INFO("Reconfigure Request: %f %f %f", config.p_double_param, config.i_double_param, config.d_double_param);
+	pid_param = config;
+}
+
 void joyCallback(const sensor_msgs::JoyConstPtr& joy)
 {
 	xbox_joy = *joy;
@@ -96,6 +105,14 @@ int main(int argc, char** argv)
 	int joy_axis_left_right_idx, joy_axis_up_down_idx;
 
 	ROS_INFO("OSA High Speed Android balance node.");
+
+	ROS_INFO("Setup dynamic_reconfigure parameters.");
+
+	dynamic_reconfigure::Server<osa_control::hsa_balance_dyn_Config> hsa_balance_dyn_server;
+	dynamic_reconfigure::Server<osa_control::hsa_balance_dyn_Config>::CallbackType f;
+
+	f = boost::bind(&HSABallanceDynCallback, _1, _2);
+	hsa_balance_dyn_server.setCallback(f);
 
 	ROS_INFO("Grab the parameters.");
 
@@ -292,6 +309,8 @@ int main(int argc, char** argv)
 			float velocity_f = 0.0;
 			int velocity_i = 0;
 			float dt = 1/LOOP_RATE;
+
+			//PID parameters are accessed with config.p_double_param, config.i_double_param, config.d_double_param.
 
 			// Computation
 			velocity_f = -(angle*4000)/M_PI;

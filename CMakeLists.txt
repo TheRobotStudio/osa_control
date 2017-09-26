@@ -58,9 +58,9 @@ generate_messages(
 )
 
 ## Generate dynamic reconfigure options
-#generate_dynamic_reconfigure_options(
-#  cfg/kdTreeControl.cfg
-#)
+generate_dynamic_reconfigure_options(
+  cfg/hsa_balance_dyn.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -113,7 +113,7 @@ add_dependencies(osa_mobile_base_manual osa_control_generate_messages_cpp)
 add_dependencies(osa_mobile_base_follower osa_control_generate_messages_cpp)
 add_dependencies(osa_xbox_joy_conductor osa_control_generate_messages_cpp)
 add_dependencies(osa_tank_drive osa_control_generate_messages_cpp)
-add_dependencies(osa_hsa_balance osa_control_generate_messages_cpp)
+add_dependencies(osa_hsa_balance osa_control_generate_messages_cpp osa_control_gencfg)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})

@@ -497,8 +497,9 @@ int main(int argc, char** argv)
 
 		ROS_INFO("Parameters loaded successfully!\n");
 	}
-	catch(int exception)
+	catch(ros::InvalidNameException const &e)
 	{
+		ROS_ERROR(e.what());
 		ROS_ERROR("Parameters didn't load correctly!");
 		ROS_ERROR("Please modify your YAML config file and try again.");
 
