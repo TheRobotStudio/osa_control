@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Robot Studio
+ * Copyright (c) 2017, The Robot Studio
  *  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,9 +22,17 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @file arm_manual.cpp
+ * @author Cyril Jourdan
+ * @date Aug 29, 2017
+ * @version 0.1.0
+ * @brief Implementation file for the arm manual
  *
- *  Created on: Oct 3, 2016
- *      Author: Cyril Jourdan (cyril.jourdan@therobotstudio.com)
+ * Contact: cyril.jourdan@therobotstudio.com
+ * Created on : Oct 3, 2016
  */
 
 /*** Includes ***/

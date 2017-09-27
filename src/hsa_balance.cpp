@@ -328,7 +328,7 @@ int main(int argc, char** argv)
 			pub_motor_cmd_array.publish(motor_cmd_array);
 		}
 
-		r.sleep();
+		if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", LOOP_RATE);
 	}//while ros ok
 
 	return 0;
