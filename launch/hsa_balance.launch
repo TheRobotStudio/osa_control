@@ -4,8 +4,8 @@
 	<node name="osa_hsa_balance_node" pkg="osa_control" type="osa_hsa_balance" respawn="true">
 	
 		<!-- These parameters are the 2 DOF of the wheels to control -->
-		<param name="dof_right_wheel" type="string" value="dof13" />
-		<param name="dof_left_wheel" type="string" value="dof17" />	
+		<param name="dof_right_wheel" type="string" value="dof10" />
+		<param name="dof_left_wheel" type="string" value="dof9" />	
 		
 		<!-- These parameters are the indexes in the axes array of a std_msgs::Joy -->
 		<param name="joy_axis_left_right" type="int" value="3" />

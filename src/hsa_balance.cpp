@@ -53,6 +53,7 @@
 /*** Defines ***/
 #define LOOP_RATE	15 //HEART_BEAT
 #define NUMBER_OF_WHEELS	2
+#define NUMBER_OF_MOTORS	10
 
 using namespace std;
 
@@ -67,9 +68,9 @@ bool imu_arrived = false;
 bool motor_data_array_arrived = true;
 
 /*** Callback functions ***/
-void HSABallanceDynCallback(osa_control::hsa_balance_dyn_Config &config, uint32_t level)
+void HSABalanceDynCallback(osa_control::hsa_balance_dyn_Config &config, uint32_t level)
 {
-	ROS_INFO("Reconfigure Request: %f %f %f", config.p_double_param, config.i_double_param, config.d_double_param);
+	ROS_INFO("Reconfigure Request: %f %f %f %f", config.p_double_param, config.i_double_param, config.d_double_param, config.pt_double_param);
 	pid_param = config;
 }
 
@@ -111,7 +112,7 @@ int main(int argc, char** argv)
 	dynamic_reconfigure::Server<osa_control::hsa_balance_dyn_Config> hsa_balance_dyn_server;
 	dynamic_reconfigure::Server<osa_control::hsa_balance_dyn_Config>::CallbackType f;
 
-	f = boost::bind(&HSABallanceDynCallback, _1, _2);
+	f = boost::bind(&HSABalanceDynCallback, _1, _2);
 	hsa_balance_dyn_server.setCallback(f);
 
 	ROS_INFO("Grab the parameters.");
@@ -270,20 +271,23 @@ int main(int argc, char** argv)
 
 	//create the command array
 	motor_cmd_array.layout.dim.push_back(std_msgs::MultiArrayDimension());
-	motor_cmd_array.layout.dim[0].size = NUMBER_OF_WHEELS;
-	motor_cmd_array.layout.dim[0].stride = NUMBER_OF_WHEELS;
+	motor_cmd_array.layout.dim[0].size = NUMBER_OF_MOTORS;
+	motor_cmd_array.layout.dim[0].stride = NUMBER_OF_MOTORS;
 	motor_cmd_array.layout.dim[0].label = "motors";
 	motor_cmd_array.layout.data_offset = 0;
 	motor_cmd_array.motor_cmd.clear();
-	motor_cmd_array.motor_cmd.resize(NUMBER_OF_WHEELS);
+	motor_cmd_array.motor_cmd.resize(NUMBER_OF_MOTORS);
 
 	//Initialization
-	for(int i=0; i<NUMBER_OF_WHEELS; i++)
+	for(int i=0; i<NUMBER_OF_MOTORS; i++)
 	{
-		motor_cmd_array.motor_cmd[i].node_id = node_id[i];
-		motor_cmd_array.motor_cmd[i].command = SET_TARGET_VELOCITY;
+		motor_cmd_array.motor_cmd[i].node_id = i+1;
+		motor_cmd_array.motor_cmd[i].command = SET_TARGET_POSITION;
 		motor_cmd_array.motor_cmd[i].value = 0;
 	}
+
+	motor_cmd_array.motor_cmd[8].command = SET_TARGET_VELOCITY;			//For the drive wheels
+	motor_cmd_array.motor_cmd[9].command = SET_TARGET_VELOCITY;
 
 	/* Main loop */
 	ROS_INFO("Main loop");
@@ -293,9 +297,9 @@ int main(int argc, char** argv)
 		// Get imu and motor data through callbacks.
 		ros::spinOnce();
 
-		if(joy_arrived)
+		if(joy_arrived)								//Will only be true if values have changed
 		{
-			// Joystick control
+			//Joystick control
 			//xbox_joy.buttons[0];
 			//xbox_joy.axes[0];
 		}
@@ -311,6 +315,7 @@ int main(int argc, char** argv)
 			float dt = 1/LOOP_RATE;
 
 			//PID parameters are accessed with config.p_double_param, config.i_double_param, config.d_double_param.
+			//Pitch Trim parameter is accessed with config.pt_double_param
 
 			// Computation
 			velocity_f = -(angle*4000)/M_PI;
@@ -320,13 +325,17 @@ int main(int argc, char** argv)
 			ROS_INFO("angle = %f, velocity = %d", angle, velocity_i);
 
 			// Set final motor velocity
-			motor_cmd_array.motor_cmd[0].value = velocity_i;
-			motor_cmd_array.motor_cmd[1].value = velocity_i;
+			motor_cmd_array.motor_cmd[8].value = velocity_i;
+			motor_cmd_array.motor_cmd[9].value = velocity_i;
 
 			// Publish the motor commands topic, caught by the command_builder node
 			// which send it to the CAN bus via topic_to_socketcan_node
 			pub_motor_cmd_array.publish(motor_cmd_array);
 		}
+
+		imu_arrived = false;
+		motor_data_array_arrived = false;
+		joy_arrived = false;
 
 		if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", LOOP_RATE);
 	}//while ros ok
