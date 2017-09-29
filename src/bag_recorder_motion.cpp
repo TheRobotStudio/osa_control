@@ -27,7 +27,7 @@
 /**
  * @file bag_recorder_motion.cpp
  * @author Cyril Jourdan
- * @date Sep 28, 2017
+ * @date Sep 29, 2017
  * @version 0.1.0
  * @brief Implementation file for the bag recorder motion
  *
@@ -63,28 +63,11 @@ int main (int argc, char** argv)
 {
 	// Initialize ROS
 	ros::init(argc, argv, "osa_bag_recorder_motion_node");
-	ros::NodeHandle nh;
+	ros::NodeHandle nh("~");
 
 	// Variables
 	bool run = true;
 	rosbag::Bag bag;
-/*
-	int heartbeat = 0;
-
-	try
-	{
-		//load robot parameters
-		if(!nh.param("/robot/heartbeat", heartbeat, 0))
-		{
-			ROS_WARN("The parameter /robot/heartbeat has not been retreived from the server.");
-		}
-	}
-	catch(ros::InvalidNameException const &e)
-	{
-		ROS_ERROR(e.what());
-		return 0;
-	}
-*/
 
 	// Parameters
 	string package_name;
@@ -116,19 +99,14 @@ int main (int argc, char** argv)
 		return 0;
 	}
 
-	ros::Rate r(loop_rate);
-
-	//rosbag::Bag bag;
-	//bag.open(ros::package::getPath("osa_control") + "/bag/arm/imuRawToShoulder_1.bag", rosbag::bagmode::Write); //imuRawToShoulder_1  //btnA
-
 	//Subscribers
 	ros::Subscriber sub_motor_data_array = nh.subscribe ("/motor_data_array", 10, motorDataArrayCallback);
-
-
 
 	ros::Duration(3).sleep();
 
 	ROS_INFO("Start");
+
+	ros::Rate r(loop_rate);
 
 	while(run)
 	{
@@ -143,11 +121,10 @@ int main (int argc, char** argv)
 
 			//but this back to false for the next record
 			motor_data_array_arrived = false;
-
 		}
 
-		loop_nb++;
-		if(loop_nb == 100) run=false; //200=10s, 2400=2min //400
+		loop_nb--;
+		if(loop_nb == 0) run=false; //200=10s, 2400=2min //400
 
 		if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", loop_rate);
 	}
