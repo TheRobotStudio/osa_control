@@ -28,7 +28,7 @@
  * @file command_builder.cpp
  * @author Cyril Jourdan
  * @date Sep 11, 2017
- * @version OSA 0.1.0
+ * @version 0.1.0
  * @brief Implementation file for the command builder
  *
  * Contact: cyril.jourdan@therobotstudio.com

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, The Robot Studio
+ * Copyright (c) 2017, The Robot Studio
  *  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,12 +22,19 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  Created on: Mar 27, 2015
- *      Author: Cyril Jourdan (cyril.jourdan@therobotstudio.com)
  */
 
-/*** Includes ***/
+/**
+ * @file bag_recorder_motion.cpp
+ * @author Cyril Jourdan
+ * @date Sep 28, 2017
+ * @version 0.1.0
+ * @brief Implementation file for the bag recorder motion
+ *
+ * Contact: cyril.jourdan@therobotstudio.com
+ * Created on : Mar 27, 2015
+ */
+
 #include "ros/ros.h"
 #include <ros/package.h>
 #include <rosbag/bag.h>
@@ -35,10 +42,8 @@
 #include <rosbag/recorder.h>
 #include <osa_msgs/MotorDataMultiArray.h>
 #include <stdio.h>
-#include "robot_defines.h"
 
- /*** Defines ***/
-#define LOOP_RATE	HEART_BEAT
+using namespace std;
 
 /*** Variables ***/
 osa_msgs::MotorDataMultiArray motor_data_array;
@@ -59,21 +64,63 @@ int main (int argc, char** argv)
 	// Initialize ROS
 	ros::init(argc, argv, "osa_bag_recorder_motion_node");
 	ros::NodeHandle nh;
+
+	// Variables
 	bool run = true;
-
-	ros::Rate r(LOOP_RATE);
-
 	rosbag::Bag bag;
-	bag.open(ros::package::getPath("osa_control") + "/bag/arm/imuRawToShoulder_1.bag", rosbag::bagmode::Write); //imuRawToShoulder_1  //btnA
+	int heartbeat = 0;
+
+	try
+	{
+		//load robot parameters
+		if(!nh.param("/robot/heartbeat", heartbeat, 0))
+		{
+			ROS_WARN("The parameter /robot/heartbeat has not been retreived from the server.");
+		}
+	}
+	catch(ros::InvalidNameException const &e)
+	{
+		ROS_ERROR(e.what());
+		return 0;
+	}
+
+	ros::Rate r(heartbeat);
+
+	// Parameters
+	string bag_path_name;
+
+	// Grab the parameters
+	try
+	{
+		nh.param("bag_path", bag_path_name, string("~"));
+	}
+	catch(ros::InvalidNameException const &e)
+	{
+		ROS_ERROR(e.what());
+		return 0;
+	}
+
+	try
+	{
+		bag.open(bag_path_name, rosbag::bagmode::Write);
+	}
+	catch(rosbag::BagException const &e)
+	{
+		ROS_ERROR(e.what());
+		return 0;
+	}
+
+	//rosbag::Bag bag;
+	//bag.open(ros::package::getPath("osa_control") + "/bag/arm/imuRawToShoulder_1.bag", rosbag::bagmode::Write); //imuRawToShoulder_1  //btnA
 
 	//Subscribers
-	ros::Subscriber sub_motorDataArray = nh.subscribe ("/motor_data_array", 10, motorDataArrayCallback);
+	ros::Subscriber sub_motor_data_array = nh.subscribe ("/motor_data_array", 10, motorDataArrayCallback);
 
-	int loopNb = 0;
+	int loop_nb = 0;
 
 	ros::Duration(3).sleep();
 
-	printf("Start\n");
+	ROS_INFO("Start");
 
 	while(run)
 	{
@@ -89,18 +136,18 @@ int main (int argc, char** argv)
 			//but this back to false for the next record
 			motor_data_array_arrived = false;
 
-			//loopNb++;
+			//loop_nb++;
 		}
 
-		loopNb++;
-		if(loopNb == 100) run=false; //200=10s, 2400=2min //400
+		loop_nb++;
+		if(loop_nb == 100) run=false; //200=10s, 2400=2min //400
 
 		r.sleep();
 	}
 
 	bag.close(); //close the bag
 	run = false; //stop the while loop, quit the program
-	printf("Finish\n");
+	ROS_INFO("Finish");
 
 	return 0;
 }

@@ -91,6 +91,8 @@ int main(int argc, char** argv)
 	//Subscribers
 	ros::Subscriber sub_joy = nh.subscribe ("/joy", 10, joyCallback);
 	
+	//TODO make it depending on parameters to link a node to a button
+
 	//Services
 	ros::ServiceServer srv_switch_node = nh.advertiseService("switch_xbox_joy_conductor", switchNode);
 	ros::ServiceClient srv_clt_switch_arm_manual = nh.serviceClient<osa_control::switchNode>("switch_right_arm_manual_srv");

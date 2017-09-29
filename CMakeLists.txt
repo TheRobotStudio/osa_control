@@ -98,6 +98,7 @@ include_directories(/usr/include/eigen3)
 ## Declare a cpp executable
 add_executable(osa_command_builder src/command_builder.cpp)
 add_executable(osa_bag_recorder_motion src/bag_recorder_motion.cpp)
+add_executable(osa_bag_recorder src/bag_recorder.cpp)
 add_executable(osa_xbox_joy_conductor src/xbox_joy_conductor.cpp)
 add_executable(osa_arm_manual src/arm_manual.cpp)
 add_executable(osa_mobile_base_manual src/mobile_base_manual.cpp) 
@@ -108,6 +109,7 @@ add_executable(osa_hsa_balance src/hsa_balance.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
+add_dependencies(osa_bag_recorder osa_control_generate_messages_cpp)
 add_dependencies(osa_arm_manual osa_control_generate_messages_cpp)
 add_dependencies(osa_mobile_base_manual osa_control_generate_messages_cpp)
 add_dependencies(osa_mobile_base_follower osa_control_generate_messages_cpp)
@@ -118,6 +120,7 @@ add_dependencies(osa_hsa_balance osa_control_generate_messages_cpp osa_control_g
 ## Specify libraries to link a library or executable target against
 target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_bag_recorder_motion ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_bag_recorder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_xbox_joy_conductor ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_base_test_modes ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_arm_manual ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
