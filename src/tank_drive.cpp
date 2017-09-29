@@ -91,7 +91,7 @@ int main(int argc, char** argv)
 	ROS_INFO("OSA Tank Drive node.");
 
 	ROS_INFO("Grab the parameters.");
-	// Grab the parameters
+	// Grab the parameters //TODO try catch
 	nh.param("dof_right_wheel", dof_wheel_name[0], string("/dof1"));
 	nh.param("dof_left_wheel", dof_wheel_name[1], string("/dof2"));
 	nh.param("joy_axis_left_right", joy_axis_left_right_idx, 3);
