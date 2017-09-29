@@ -1,0 +1,9 @@
+#goal definition
+string sequence_bag_path
+float32 loop_rate
+---
+#result definition
+uint32 total_postures_played
+---
+#feedback
+float32 percent_complete

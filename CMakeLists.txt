@@ -12,10 +12,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   osa_msgs
+  osa_communication
   visualization_msgs
   sensor_msgs
   message_generation
   dynamic_reconfigure
+  actionlib_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -50,11 +52,18 @@ add_service_files(
   switchNode.srv
 )
 
+## Generate actions in the 'action' folder
+add_action_files(
+  DIRECTORY action
+  FILES PlaySequence.action
+)
+
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
   std_msgs
   osa_msgs
+  actionlib_msgs
 )
 
 ## Generate dynamic reconfigure options
@@ -74,7 +83,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES osa_control
- CATKIN_DEPENDS rosbag roscpp roslib std_msgs tf osa_msgs visualization_msgs
+ CATKIN_DEPENDS rosbag roscpp roslib std_msgs tf osa_msgs osa_communication visualization_msgs actionlib_msgs
  DEPENDS Eigen
 )
 
@@ -107,6 +116,8 @@ add_executable(osa_base_test_modes src/base_test_modes.cpp)
 add_executable(osa_tank_drive src/tank_drive.cpp)
 add_executable(osa_hsa_balance src/hsa_balance.cpp)
 
+add_executable(osa_play_sequence_action_server src/play_sequence_action_server.cpp)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(osa_bag_recorder osa_control_generate_messages_cpp)
@@ -116,6 +127,8 @@ add_dependencies(osa_mobile_base_follower osa_control_generate_messages_cpp)
 add_dependencies(osa_xbox_joy_conductor osa_control_generate_messages_cpp)
 add_dependencies(osa_tank_drive osa_control_generate_messages_cpp)
 add_dependencies(osa_hsa_balance osa_control_generate_messages_cpp osa_control_gencfg)
+
+add_dependencies(osa_play_sequence_action_server osa_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
@@ -128,6 +141,8 @@ target_link_libraries(osa_mobile_base_manual ${catkin_LIBRARIES} ${Eigen_INCLUDE
 target_link_libraries(osa_mobile_base_follower ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_tank_drive ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_hsa_balance ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+
+target_link_libraries(osa_play_sequence_action_server ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 
 #############
 ## Install ##

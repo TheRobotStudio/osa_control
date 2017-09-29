@@ -46,8 +46,11 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>osa_msgs</build_depend>
+  <build_depend>osa_communication</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>rosbag</run_depend>
@@ -56,8 +59,12 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>osa_msgs</run_depend>
+  <run_depend>osa_communication</run_depend>
   <run_depend>visualization_msgs</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>actionlib_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
+  <run_depend>message_generation</run_depend>
   
   <!-- The export tag contains other, unspecified, tags -->
   <export>    

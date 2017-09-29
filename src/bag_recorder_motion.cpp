@@ -68,6 +68,7 @@ int main (int argc, char** argv)
 	// Variables
 	bool run = true;
 	rosbag::Bag bag;
+/*
 	int heartbeat = 0;
 
 	try
@@ -83,16 +84,21 @@ int main (int argc, char** argv)
 		ROS_ERROR(e.what());
 		return 0;
 	}
+*/
 
-	ros::Rate r(heartbeat);
+
 
 	// Parameters
 	string bag_path_name;
+	int loop_rate;
+	int loop_nb;
 
 	// Grab the parameters
 	try
 	{
 		nh.param("bag_path", bag_path_name, string("~"));
+		nh.param("loop_rate", loop_rate, 15);
+		nh.param("loop_nb", loop_nb, 15);
 	}
 	catch(ros::InvalidNameException const &e)
 	{
@@ -110,13 +116,15 @@ int main (int argc, char** argv)
 		return 0;
 	}
 
+	ros::Rate r(loop_rate);
+
 	//rosbag::Bag bag;
 	//bag.open(ros::package::getPath("osa_control") + "/bag/arm/imuRawToShoulder_1.bag", rosbag::bagmode::Write); //imuRawToShoulder_1  //btnA
 
 	//Subscribers
 	ros::Subscriber sub_motor_data_array = nh.subscribe ("/motor_data_array", 10, motorDataArrayCallback);
 
-	int loop_nb = 0;
+
 
 	ros::Duration(3).sleep();
 
@@ -136,13 +144,12 @@ int main (int argc, char** argv)
 			//but this back to false for the next record
 			motor_data_array_arrived = false;
 
-			//loop_nb++;
 		}
 
 		loop_nb++;
 		if(loop_nb == 100) run=false; //200=10s, 2400=2min //400
 
-		r.sleep();
+		if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", loop_rate);
 	}
 
 	bag.close(); //close the bag
