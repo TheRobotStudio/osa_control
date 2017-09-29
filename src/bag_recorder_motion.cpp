@@ -86,17 +86,17 @@ int main (int argc, char** argv)
 	}
 */
 
-
-
 	// Parameters
-	string bag_path_name;
+	string package_name;
+	string bag_path;
 	int loop_rate;
 	int loop_nb;
 
 	// Grab the parameters
 	try
 	{
-		nh.param("bag_path", bag_path_name, string("~"));
+		nh.param("package_name", package_name, string("~"));
+		nh.param("bag_path", bag_path, string("~"));
 		nh.param("loop_rate", loop_rate, 15);
 		nh.param("loop_nb", loop_nb, 15);
 	}
@@ -108,7 +108,7 @@ int main (int argc, char** argv)
 
 	try
 	{
-		bag.open(bag_path_name, rosbag::bagmode::Write);
+		bag.open(ros::package::getPath(package_name) + bag_path, rosbag::bagmode::Write);
 	}
 	catch(rosbag::BagException const &e)
 	{
