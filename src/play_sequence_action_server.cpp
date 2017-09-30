@@ -25,7 +25,7 @@
  */
 
 /**
- * @file bag_recorder_motion.cpp
+ * @file play_sequence_action_server.cpp
  * @author Cyril Jourdan
  * @date Sep 29, 2017
  * @version 0.1.0
@@ -49,6 +49,8 @@
 #include <std_msgs/String.h>
 #include <flann/flann.hpp> //used for the kdtree search
 #include <stdio.h>
+#include <sstream>
+#include <string>
 
 using namespace flann;
 
@@ -84,6 +86,17 @@ public:
 			ROS_ERROR(e.what());
 		}
 
+		//create the commands multi array
+		motor_cmd_array_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+		motor_cmd_array_.layout.dim[0].size = number_epos_boards_;
+		motor_cmd_array_.layout.dim[0].stride = number_epos_boards_;
+		motor_cmd_array_.layout.dim[0].label = "motors";
+		motor_cmd_array_.layout.data_offset = 0;
+		motor_cmd_array_.motor_cmd.clear();
+		motor_cmd_array_.motor_cmd.resize(number_epos_boards_);
+
+		initCmdSet();
+
 		// Start the action server
 		as_.start();
 	}
@@ -92,8 +105,6 @@ public:
 	{
 	}
 
-	//void goalCallback(const osa_control::PlaySequenceActionGoalConstPtr &goal)
-	//void goalCallback(actionlib::SimpleActionServer<PlaySequenceAction>::GoalHandle goal)
 	void goalCallback()
 	{
 		// Get the goal parameters
@@ -103,34 +114,40 @@ public:
 		// Parameters
 		std::string sequence_bag_path_name = ""; //sequence_bag_path.data;
 	*/
+		// accept the new goal
 		goal_ = *as_.acceptNewGoal();
 
 		//char* sequence_bag_path = goal_.sequence_bag_path.data();
 		int32_t loop_rate = goal_.loop_rate;
 
 		// Parameters
-		std::string sequence_bag_path_name(goal_.sequence_bag_path.data());
+		std::string package_name(goal_.package_name.data());
+		std::string sequence_bag_path(goal_.sequence_bag_path.data());
 
 		// try to open the bag file
 		try
 		{
-			sequence_bag_.open(sequence_bag_path_name, rosbag::bagmode::Read);
+			sequence_bag_.open(ros::package::getPath(package_name) + sequence_bag_path, rosbag::bagmode::Read);
 		}
 		catch(rosbag::BagException const &e)
 		{
 			ROS_ERROR(e.what());
 
 			// Abort goal
+			ROS_ERROR("Abort goal!");
 			as_.setAborted();
 		}
 
 		rosbag::View view(sequence_bag_, rosbag::TopicQuery("/motor_data_array"));
 
-		//ROS_INFO("Create btnA matrix");
-		//create the dataset_positions matrix
+		//create the matrix
 		int dataset_post_dim = view.size(); //set the dataset dim equal to the number of lines in the bag file
-		Matrix<int> temp_mat(new int[number_epos_boards_*dataset_post_dim], dataset_post_dim, number_epos_boards_);
-		positions_ = temp_mat;
+
+		Matrix<int> temp_node_id_mat(new int[number_epos_boards_*dataset_post_dim], dataset_post_dim, number_epos_boards_);
+		node_id_mat_ = temp_node_id_mat;
+
+		Matrix<int> temp_position_mat(new int[number_epos_boards_*dataset_post_dim], dataset_post_dim, number_epos_boards_);
+		positions_mat_ = temp_position_mat;
 
 		int line = 0;
 		BOOST_FOREACH(rosbag::MessageInstance const m, view) //error compiles ok
@@ -142,7 +159,8 @@ public:
 				//Build the dataset_positions matrix
 				for(int j=0; j<number_epos_boards_; j++)
 				{
-					positions_.ptr()[positions_.cols*line+j] = i->motor_data[j].position;
+					node_id_mat_.ptr()[node_id_mat_.cols*line+j] = i->motor_data[j].node_id;
+					positions_mat_.ptr()[positions_mat_.cols*line+j] = i->motor_data[j].position;
 				}
 			}
 			else
@@ -153,12 +171,21 @@ public:
 
 		sequence_bag_.close();
 
-		// accept the new goal
-		//goal_ = as_.acceptNewGoal()->samples;
-		feedback_.percent_complete = 0;
+		//Display for debug
+		displayMatrix(node_id_mat_, "node_id_mat");
+		displayMatrix(positions_mat_, "positions_mat");
 
-		// publish the feedback
-		as_.publishFeedback(feedback_);
+		//feedback_.percent_complete = 0;
+		//publish the feedback
+		//as_.publishFeedback(feedback_);
+
+		playBag(goal_.loop_rate);
+
+		// Free matrices pointers from memory
+		delete[] temp_node_id_mat.ptr();
+		delete[] temp_position_mat.ptr();
+		delete[] node_id_mat_.ptr();
+		delete[] positions_mat_.ptr();
 	}
 
 	void preemptCallback()
@@ -208,8 +235,8 @@ public:
 	{
 		for(int i=0; i<number_epos_boards_; i++)
 		{
-			motor_cmd_array_.motor_cmd[i].node_id = i+1;
-			motor_cmd_array_.motor_cmd[i].command = SEND_DUMB_MESSAGE;
+			motor_cmd_array_.motor_cmd[i].node_id = 0;
+			motor_cmd_array_.motor_cmd[i].command = SET_TARGET_POSITION;
 			motor_cmd_array_.motor_cmd[i].value = 0;
 		}
 	}
@@ -218,26 +245,30 @@ public:
 	{
 		ros::Rate r(loop_rate);
 
-		for(int i=0; i<positions_.rows; i++)
+		for(int i=0; i<positions_mat_.rows; i++)
 		{
 			// Check for action preempt or abort
 			ros::spinOnce();
 
 			for(int j=0; j<number_epos_boards_; j++)
 			{
-				motor_cmd_array_.motor_cmd[j].node_id = j+1;
+				motor_cmd_array_.motor_cmd[j].node_id = node_id_mat_.ptr()[node_id_mat_.cols*i+j];
 				motor_cmd_array_.motor_cmd[j].command = SET_TARGET_POSITION;
-				motor_cmd_array_.motor_cmd[j].value = positions_.ptr()[positions_.cols*i+j];
+				motor_cmd_array_.motor_cmd[j].value = positions_mat_.ptr()[positions_mat_.cols*i+j];
 
 				//ROS_DEBUG("val = %d", motor_cmd_array.motor_cmd[j].value);
 			}
 
 			pub_motor_cmd_array_.publish(motor_cmd_array_);
 
+			// publish the feedback
+			//feedback_.percent_complete = 0;
+			//as_.publishFeedback(feedback_);
+
 			if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", loop_rate);
 		}
 	}
-
+/*
 	//debug function to display a matrix
 	void displayMatrixFloat(const Matrix<float> matrix, char* name)
 	{
@@ -256,24 +287,32 @@ public:
 			count += 1;
 			std::cerr << std::endl;
 		}
-	}
+	}*/
 
-	void displayMatrixInt(const Matrix<int> matrix, char* name)
+	template <typename T>
+	void displayMatrix(const Matrix<T> matrix, char* name)
 	{
-		std::cout << name << " matrix :" << std::endl;
+		//std::cout << name << " matrix :" << std::endl;
+		ROS_DEBUG_STREAM(name << " matrix:");
 
 		int count = 0;
 		for(int i=0; i<matrix.rows; i++)
 		{
-			std::cout << count << " | ";
+			std::ostringstream matrix_line;
+			//std::cout << count << " | ";
+			//ROS_DEBUG_STREAM(count << " | ");
+			matrix_line << " | ";
 
 			for(int j=0; j<matrix.cols; j++)
 			{
-				std::cout << matrix.ptr()[matrix.cols*i+j] << "\t";
+				//std::cout << matrix.ptr()[matrix.cols*i+j] << "\t";
+				matrix_line << matrix.ptr()[matrix.cols*i+j] << "\t";
 			}
 
+			ROS_DEBUG_STREAM(matrix_line.str());
+
 			count += 1;
-			std::cerr << std::endl;
+			//std::cerr << std::endl;
 		}
 	}
 
@@ -290,7 +329,8 @@ protected:
 	ros::Publisher pub_motor_cmd_array_;
 	rosbag::Bag sequence_bag_;
 	osa_msgs::MotorCmdMultiArray motor_cmd_array_;
-	Matrix<int> positions_; //matrix for the positions
+	Matrix<int> node_id_mat_; //matrix for the positions
+	Matrix<int> positions_mat_; //matrix for the positions
 	int number_epos_boards_;
 };
 

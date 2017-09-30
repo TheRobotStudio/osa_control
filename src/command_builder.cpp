@@ -161,7 +161,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			profilePositionCmdStep[i] = 3; //increase to send the upper state
 			cmdIgnored[i] = true;
 
-			ROS_INFO("motor[%d] - Profile Position - send the lower state of the controlword bit", motor_cmd_array.motor_cmd[i].node_id);
+			ROS_DEBUG("motor[%d] - Profile Position - send the lower state of the controlword bit", motor_cmd_array.motor_cmd[i].node_id);
 		}
 		else if(profilePositionCmdStep[i] == 3) //send the lower state of the controlword bit
 		{
@@ -171,7 +171,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			profilePositionCmdStep[i] = 0; //reset to 0 after the new position has been applied
 			cmdIgnored[i] = true;
 
-			ROS_INFO("motor[%d] - Profile Position - send the upper state of the controlword bit", motor_cmd_array.motor_cmd[i].node_id);
+			ROS_DEBUG("motor[%d] - Profile Position - send the upper state of the controlword bit", motor_cmd_array.motor_cmd[i].node_id);
 		}
 		else // == 0
 		{
@@ -182,7 +182,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 				motor_cmd_array.motor_cmd[i].value = cmds->motor_cmd[i].value;
 				profilePositionCmdStep[i] = 1;
 
-				ROS_INFO("motor[%d] - Profile Position - send target position [%d]", motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].value);
+				ROS_DEBUG("motor[%d] - Profile Position - send target position [%d]", motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].value);
 			}
 
 			cmdIgnored[i] = false;
@@ -218,7 +218,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 			profileVelocityCmdStep[i] = 0; //reset to 0 after the new velocity has been applied
 			cmdIgnored[i] = true;
 
-			ROS_INFO("motor[%d] - Profile Velocity [%d] - set the controlword bit",
+			ROS_DEBUG("motor[%d] - Profile Velocity [%d] - set the controlword bit",
 					motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].command);
 		}
 		else // == 0
@@ -230,7 +230,7 @@ void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 				motor_cmd_array.motor_cmd[i].value = cmds->motor_cmd[i].value;
 				profileVelocityCmdStep[i] = 1;
 
-				ROS_INFO("motor[%d] - Profile Velocity [%d] - send target velocity [%d]",
+				ROS_DEBUG("motor[%d] - Profile Velocity [%d] - send target velocity [%d]",
 						motor_cmd_array.motor_cmd[i].node_id, motor_cmd_array.motor_cmd[i].command, motor_cmd_array.motor_cmd[i].value);
 			}
 
@@ -323,7 +323,7 @@ int main(int argc, char** argv)
 			ROS_WARN("No /robot/can_device found in YAML config file");
 		}
 
-		ROS_INFO("Robot name=%s, dof=%d, can=%s", robot_name_.c_str(), number_epos_boards_, robot_can_device_.c_str());
+		ROS_DEBUG("Robot name=%s, dof=%d, can=%s", robot_name_.c_str(), number_epos_boards_, robot_can_device_.c_str());
 /*
 		//load mobile_base parameters
 		if(nh.searchParam("/mobile_base", mobile_base_str))

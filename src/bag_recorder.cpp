@@ -119,19 +119,21 @@ int main (int argc, char** argv)
 {
 	// Initialize ROS
 	ros::init(argc, argv, "trs_bag_recorder_node");
-	ros::NodeHandle nh;
+	ros::NodeHandle nh("~");
 
 	//Variables
 	bool run = true;
 	rosbag::Bag bag;
 
 	// Parameters
-	string bag_path_name;
+	string package_name;
+	string bag_path;
 
 	// Grab the parameters
 	try
 	{
-		nh.param("bag_path", bag_path_name, string("~"));
+		nh.param("package_name", package_name, string("~"));
+		nh.param("bag_path", bag_path, string("~"));
 	}
 	catch(ros::InvalidNameException const &e)
 	{
@@ -141,7 +143,7 @@ int main (int argc, char** argv)
 
 	try
 	{
-		bag.open(bag_path_name, rosbag::bagmode::Write);
+		bag.open(ros::package::getPath(package_name) + bag_path, rosbag::bagmode::Write);
 	}
 	catch(rosbag::BagException const &e)
 	{
@@ -150,7 +152,7 @@ int main (int argc, char** argv)
 	}
 
 	//Subscribers
-	ros::Subscriber sub_motor_data_array = nh.subscribe ("/motor_data_array", 10, motorDataArrayCallback);
+	ros::Subscriber sub_motor_data_array = nh.subscribe("/motor_data_array", 10, motorDataArrayCallback);
 
 	//ros::Subscriber sub_input_data = nh.subscribe ("/input_data", 10, inputDataCallback);
 /*

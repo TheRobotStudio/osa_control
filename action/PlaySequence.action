@@ -1,4 +1,5 @@
 #goal definition
+string package_name
 string sequence_bag_path
 float32 loop_rate
 ---

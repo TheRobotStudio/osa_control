@@ -50,13 +50,10 @@
 //ROS services
 #include "osa_control/switchNode.h"
 #include "osa_control/getSlaveCmdArray.h"
-//other
-//#include <stdio.h>
-//ROS packages include 
-#include "robot_defines.h"
+//OSA
+#include <enums.h>
 
 /*** Defines ***/
-#define LOOP_RATE	HEART_BEAT
 #define NUMBER_OF_WHEELS	2
 
 using namespace std;
@@ -82,20 +79,46 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "osa_tank_drive_node");
 	ros::NodeHandle nh("~");
 
-	ros::Rate r(LOOP_RATE);
-
 	// Parameters
+	int heartbeat;
 	string dof_wheel_name[NUMBER_OF_WHEELS];
 	int joy_axis_left_right_idx, joy_axis_up_down_idx;
 
 	ROS_INFO("OSA Tank Drive node.");
 
 	ROS_INFO("Grab the parameters.");
-	// Grab the parameters //TODO try catch
-	nh.param("dof_right_wheel", dof_wheel_name[0], string("/dof1"));
-	nh.param("dof_left_wheel", dof_wheel_name[1], string("/dof2"));
-	nh.param("joy_axis_left_right", joy_axis_left_right_idx, 3);
-	nh.param("joy_axis_up_down", joy_axis_up_down_idx, 4);
+
+	try
+	{
+		//load robot parameters
+		if(!nh.param("/robot/heartbeat", heartbeat, 15))
+		{
+			ROS_WARN("No /robot/name found in YAML config file");
+		}
+	}
+	catch(ros::InvalidNameException const &e)
+	{
+		ROS_ERROR(e.what());
+		ROS_ERROR("Parameters didn't load correctly!");
+		ROS_ERROR("Please modify your YAML config file and try again.");
+
+		return false;
+	}
+
+
+	// Grab the parameters
+	try
+	{
+		nh.param("dof_right_wheel", dof_wheel_name[0], string("/dof1"));
+		nh.param("dof_left_wheel", dof_wheel_name[1], string("/dof2"));
+		nh.param("joy_axis_left_right", joy_axis_left_right_idx, 3);
+		nh.param("joy_axis_up_down", joy_axis_up_down_idx, 4);
+	}
+	catch(ros::InvalidNameException const &e)
+	{
+		ROS_ERROR(e.what());
+		return 0;
+	}
 
 	string name[NUMBER_OF_WHEELS];
 	string type[NUMBER_OF_WHEELS];
@@ -250,6 +273,9 @@ int main(int argc, char** argv)
 	int left_wheel_i = 0;
 	int right_wheel_i = 0;
 
+	// Start the heartbeat
+	ros::Rate r(heartbeat);
+
 	while(ros::ok())
 	{
 		//Default base value
@@ -284,7 +310,7 @@ int main(int argc, char** argv)
 			pub_motor_cmd_array.publish(motor_cmd_array);
 		}
 		
-		if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", LOOP_RATE);
+		if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", heartbeat);
 	}//while ros ok
 
 	return 0;

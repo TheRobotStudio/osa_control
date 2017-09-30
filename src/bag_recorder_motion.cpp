@@ -100,7 +100,7 @@ int main (int argc, char** argv)
 	}
 
 	//Subscribers
-	ros::Subscriber sub_motor_data_array = nh.subscribe ("/motor_data_array", 10, motorDataArrayCallback);
+	ros::Subscriber sub_motor_data_array = nh.subscribe("/motor_data_array", 10, motorDataArrayCallback);
 
 	ros::Duration(3).sleep();
 
