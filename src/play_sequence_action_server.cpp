@@ -108,6 +108,7 @@ public:
 		initCmdSet();
 
 		// Start the action server
+		ROS_DEBUG("Start the action server");
 		play_sequence_as_.start();
 	}
 
@@ -349,10 +350,13 @@ protected:
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "osa_play_sequence_action_server_node");
+	ros::init(argc, argv, "osa_play_sequence_action_server_node");
 
-  PlaySequenceActionServer play_sequence(ros::this_node::getName());
-  ros::spin();
+	//TODO server name parameter to transmit to the client so they have the same name
 
-  return 0;
+	//PlaySequenceActionServer play_sequence_as(ros::this_node::getName());
+	PlaySequenceActionServer play_sequence_as("play_sequence");
+	ros::spin();
+
+	return 0;
 }

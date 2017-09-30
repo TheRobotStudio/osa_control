@@ -67,26 +67,29 @@ public:
 	}
 */
 private:
-	ros::NodeHandle nh_;
+	//ros::NodeHandle nh_;
 public:
 	PlaySequenceActionClient play_sequence_ac_;
 };
 
 int main (int argc, char **argv)
 {
-  ros::init(argc, argv, "osa_joystick_action_client_node");
+	// Initialize ROS
+	ros::init(argc, argv, "osa_joystick_action_client_node");
+	ros::NodeHandle nh("~");
 
-  JoystickActionClient joy_client(ros::this_node::getName());
+	//JoystickActionClient joy_client(ros::this_node::getName());
+	JoystickActionClient joy_client("play_sequence");
 
-  PlaySequenceGoal goal;
-  goal.package_name = "bibot_apps";
-  goal.sequence_bag_path = "/bag/bibot_1.bag";
-  goal.loop_rate = 1;
+	PlaySequenceGoal goal;
+	goal.package_name = "bibot_apps";
+	goal.sequence_bag_path = "/bag/bibot_1.bag";
+	goal.loop_rate = 1;
 
- // joy_client.getPlaySequenceAC().sendGoal(goal);
-  joy_client.play_sequence_ac_.sendPlaySequenceGoal(goal);
+	// joy_client.getPlaySequenceAC().sendGoal(goal);
+	joy_client.play_sequence_ac_.sendPlaySequenceGoal(goal);
 
-  ros::spin();
+	ros::spin();
 
-  return 0;
+	return 0;
 }
