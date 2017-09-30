@@ -29,42 +29,52 @@
  * @author Cyril Jourdan
  * @date Sep 29, 2017
  * @version 0.1.0
- * @brief Implementation file for the Play Sequence Action Server
+ * @brief Implementation file for the class PlaySequenceActionServer
  *
  * Contact: cyril.jourdan@therobotstudio.com
  * Created on : Sep 29, 2017
  */
 
 /*** Includes ***/
+//ROS
 #include <ros/ros.h>
 #include <ros/package.h>
+//ROS actionlib
 #include <actionlib/server/simple_action_server.h>
 #include <osa_control/PlaySequenceAction.h>
+//ROS bag
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <boost/foreach.hpp>
+//#include <boost/bind.hpp>
+//ROS messages
+#include <std_msgs/String.h>
 #include "osa_msgs/MotorCmdMultiArray.h"
 #include "osa_msgs/MotorDataMultiArray.h"
+//OSA
 #include <enums.h>
-#include <std_msgs/String.h>
+//Flann
 #include <flann/flann.hpp> //used for the kdtree search
+//others
 #include <stdio.h>
 #include <sstream>
 #include <string>
 
 using namespace flann;
+using namespace osa_control;
+typedef actionlib::SimpleActionServer<PlaySequenceAction> ActionServer;
 
-class PlaySequenceAction
+class PlaySequenceActionServer
 {
 public:
 
-	PlaySequenceAction(std::string name) :
-		as_(nh_, name, false),
+	PlaySequenceActionServer(std::string name) :
+		play_sequence_as_(nh_, name, false),
 		action_name_(name)
 	{
 		// Register the goal and feeback callbacks
-		as_.registerGoalCallback(boost::bind(&PlaySequenceAction::goalCallback, this));
-		as_.registerPreemptCallback(boost::bind(&PlaySequenceAction::preemptCallback, this));
+		play_sequence_as_.registerGoalCallback(boost::bind(&PlaySequenceActionServer::goalCallback, this));
+		play_sequence_as_.registerPreemptCallback(boost::bind(&PlaySequenceActionServer::preemptCallback, this));
 
 		// Subscribe to the data topic of interest
 		//sub_ = nh_.subscribe("/random_number", 1, &PlaySequenceAction::analysisCallback, this);
@@ -98,10 +108,10 @@ public:
 		initCmdSet();
 
 		// Start the action server
-		as_.start();
+		play_sequence_as_.start();
 	}
 
-	~PlaySequenceAction(void)
+	~PlaySequenceActionServer(void)
 	{
 	}
 
@@ -115,7 +125,7 @@ public:
 		std::string sequence_bag_path_name = ""; //sequence_bag_path.data;
 	*/
 		// accept the new goal
-		goal_ = *as_.acceptNewGoal();
+		goal_ = *play_sequence_as_.acceptNewGoal();
 
 		//char* sequence_bag_path = goal_.sequence_bag_path.data();
 		int32_t loop_rate = goal_.loop_rate;
@@ -135,7 +145,7 @@ public:
 
 			// Abort goal
 			ROS_ERROR("Abort goal!");
-			as_.setAborted();
+			play_sequence_as_.setAborted();
 		}
 
 		rosbag::View view(sequence_bag_, rosbag::TopicQuery("/motor_data_array"));
@@ -177,7 +187,7 @@ public:
 
 		//feedback_.percent_complete = 0;
 		//publish the feedback
-		//as_.publishFeedback(feedback_);
+		//play_sequence_as_.publishFeedback(feedback_);
 
 		playBag(goal_.loop_rate);
 
@@ -192,13 +202,13 @@ public:
 	{
 		ROS_INFO("%s: Preempted", action_name_.c_str());
 		// set the action state to preempted
-		as_.setPreempted();
+		play_sequence_as_.setPreempted();
 	}
 /*
 	void analysisCallback(const std_msgs::Float32::ConstPtr& msg)
 	{
 		// make sure that the action hasn't been canceled
-		if(!as_.isActive())
+		if(!play_sequence_as_.isActive())
 			return;
 
 		data_count_++;
@@ -209,7 +219,7 @@ public:
 		feedback_.mean = sum_ / data_count_;
 		sum_sq_ += pow(msg->data, 2);
 		feedback_.std_dev = sqrt(fabs((sum_sq_/data_count_) - pow(feedback_.mean, 2)));
-		as_.publishFeedback(feedback_);
+		play_sequence_as_.publishFeedback(feedback_);
 
 		if(data_count_ > goal_)
 		{
@@ -220,13 +230,13 @@ public:
 			{
 				ROS_INFO("%s: Aborted", action_name_.c_str());
 				//set the action state to aborted
-				as_.setAborted(result_);
+				play_sequence_as_.setAborted(result_);
 			}
 			else
 			{
 				ROS_INFO("%s: Succeeded", action_name_.c_str());
 				// set the action state to succeeded
-				as_.setSucceeded(result_);
+				play_sequence_as_.setSucceeded(result_);
 			}
 		}
 	}
@@ -256,14 +266,17 @@ public:
 				motor_cmd_array_.motor_cmd[j].command = SET_TARGET_POSITION;
 				motor_cmd_array_.motor_cmd[j].value = positions_mat_.ptr()[positions_mat_.cols*i+j];
 
-				//ROS_DEBUG("val = %d", motor_cmd_array.motor_cmd[j].value);
+				ROS_DEBUG("motor_cmd_array[%d][%d][%d][%d]", j,
+						motor_cmd_array_.motor_cmd[j].node_id,
+						motor_cmd_array_.motor_cmd[j].command,
+						motor_cmd_array_.motor_cmd[j].value);
 			}
 
-			pub_motor_cmd_array_.publish(motor_cmd_array_);
+			//pub_motor_cmd_array_.publish(motor_cmd_array_);
 
 			// publish the feedback
-			//feedback_.percent_complete = 0;
-			//as_.publishFeedback(feedback_);
+			feedback_.percent_complete = i*100/positions_mat_.rows;
+			play_sequence_as_.publishFeedback(feedback_);
 
 			if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", loop_rate);
 		}
@@ -318,7 +331,7 @@ public:
 
 protected:
 	ros::NodeHandle nh_;
-	actionlib::SimpleActionServer<osa_control::PlaySequenceAction> as_;
+	ActionServer play_sequence_as_;
 	std::string action_name_;
 	//int data_count_,
 	osa_control::PlaySequenceGoal goal_;
@@ -338,7 +351,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "osa_play_sequence_action_server_node");
 
-  PlaySequenceAction play_sequence(ros::this_node::getName());
+  PlaySequenceActionServer play_sequence(ros::this_node::getName());
   ros::spin();
 
   return 0;

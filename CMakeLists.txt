@@ -21,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+#find_package(Boost REQUIRED COMPONENTS system)
 #find_package(Eigen REQUIRED)
 
 
@@ -81,28 +81,38 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES osa_control
- CATKIN_DEPENDS rosbag roscpp roslib std_msgs tf osa_msgs osa_communication visualization_msgs actionlib_msgs
- DEPENDS Eigen
+  INCLUDE_DIRS include include/osa_control
+#  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS rosbag roscpp roslib std_msgs tf osa_msgs osa_communication visualization_msgs actionlib_msgs
+  DEPENDS Eigen
 )
 
 ###########
 ## Build ##
 ###########
 
+add_compile_options(-std=c++11)
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
- include_directories(include)
+#include_directories(include)
+#include_directories(include/osa_control)
 include_directories(
+  include
+#  include/osa_control
   ${catkin_INCLUDE_DIRS}
+#  ${Boost_INCLUDE_DIRS}
+  /usr/include/eigen3
 )
-include_directories(/usr/include/eigen3)
+#include_directories(/usr/include/eigen3)
 
 ## Declare a cpp library
 # add_library(osa_control
 #   src/${PROJECT_NAME}/osa_control.cpp
 # )
+
+#add_library(play_sequence_action_client src/play_sequence_action_client.cpp)
+#add_library(osa_control src/play_sequence_action_client.cpp)
 
 ## Declare a cpp executable
 add_executable(osa_command_builder src/command_builder.cpp)
@@ -117,6 +127,7 @@ add_executable(osa_tank_drive src/tank_drive.cpp)
 add_executable(osa_hsa_balance src/hsa_balance.cpp)
 
 add_executable(osa_play_sequence_action_server src/play_sequence_action_server.cpp)
+add_executable(osa_joystick_action_client src/joystick_action_client.cpp src/play_sequence_action_client.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -129,6 +140,7 @@ add_dependencies(osa_tank_drive osa_control_generate_messages_cpp)
 add_dependencies(osa_hsa_balance osa_control_generate_messages_cpp osa_control_gencfg)
 
 add_dependencies(osa_play_sequence_action_server osa_control_generate_messages_cpp)
+add_dependencies(osa_joystick_action_client osa_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
@@ -143,6 +155,8 @@ target_link_libraries(osa_tank_drive ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_hsa_balance ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 
 target_link_libraries(osa_play_sequence_action_server ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+#target_link_libraries(osa_joystick_action_client ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS} play_sequence_action_client)
+target_link_libraries(osa_joystick_action_client ${catkin_LIBRARIES})
 
 #############
 ## Install ##
