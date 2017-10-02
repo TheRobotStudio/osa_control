@@ -311,7 +311,8 @@ public:
 	void displayMatrix(const Matrix<T> matrix, char* name)
 	{
 		//std::cout << name << " matrix :" << std::endl;
-		ROS_DEBUG_STREAM(name << " matrix:");
+		//ROS_DEBUG_STREAM(name << " matrix:");
+		ROS_DEBUG("%s matrix:", name);
 
 		int count = 0;
 		for(int i=0; i<matrix.rows; i++)
@@ -327,7 +328,7 @@ public:
 				matrix_line << matrix.ptr()[matrix.cols*i+j] << "\t";
 			}
 
-			ROS_DEBUG_STREAM(matrix_line.str());
+			ROS_DEBUG(matrix_line.str().c_str());
 
 			count += 1;
 			//std::cerr << std::endl;

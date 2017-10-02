@@ -71,7 +71,7 @@ void PlaySequenceActionClient::doneCb(const actionlib::SimpleClientGoalState& st
 	ROS_INFO("Answer: total postures played: %d", result->total_postures_played);
 
 	// Stop the client node
-	ros::shutdown();
+	//ros::shutdown();
 }
 
 // Called once when the goal becomes active
