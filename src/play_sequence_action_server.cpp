@@ -197,6 +197,10 @@ public:
 		delete[] temp_position_mat.ptr();
 		//delete[] node_id_mat_.ptr();
 		//delete[] positions_mat_.ptr();
+
+		result_.total_postures_played = positions_mat_.rows;
+
+		play_sequence_as_.setSucceeded(result_);
 	}
 
 	void preemptCallback()
@@ -336,7 +340,6 @@ protected:
 	std::string action_name_;
 	//int data_count_,
 	osa_control::PlaySequenceGoal goal_;
-	//float sum_, sum_sq_;
 	osa_control::PlaySequenceFeedback feedback_;
 	osa_control::PlaySequenceResult result_;
 	ros::Subscriber sub_;
