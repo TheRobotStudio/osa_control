@@ -195,8 +195,8 @@ public:
 		// Free matrices pointers from memory
 		delete[] temp_node_id_mat.ptr();
 		delete[] temp_position_mat.ptr();
-		delete[] node_id_mat_.ptr();
-		delete[] positions_mat_.ptr();
+		//delete[] node_id_mat_.ptr();
+		//delete[] positions_mat_.ptr();
 	}
 
 	void preemptCallback()
@@ -276,7 +276,7 @@ public:
 			//pub_motor_cmd_array_.publish(motor_cmd_array_);
 
 			// publish the feedback
-			feedback_.percent_complete = i*100/positions_mat_.rows;
+			feedback_.percent_complete = (i+1)*100/positions_mat_.rows;
 			play_sequence_as_.publishFeedback(feedback_);
 
 			if(!r.sleep()) ROS_WARN("sleep: desired rate %dhz not met!", loop_rate);

@@ -61,13 +61,8 @@ void PlaySequenceActionClient::sendPlaySequenceGoal(PlaySequenceGoal goal)
 	// Need boost::bind to pass in the 'this' pointer
 	play_sequence_ac_.sendGoal(goal,
 				boost::bind(&PlaySequenceActionClient::doneCb, this, _1, _2),
-				boost::bind(&PlaySequenceActionClient::activeCb, this), //ActionClient::SimpleActiveCallback(),
-				boost::bind(&PlaySequenceActionClient::feedbackCb, this, _1)); //ActionClient::SimpleFeedbackCallback());
-
-
-				//boost::bind(&PlaySequenceActionClient::activeCb, this, _1, _2),
-				//boost::bind(&PlaySequenceActionClient::feedbackCb, this, _1, _2));
-
+				boost::bind(&PlaySequenceActionClient::activeCb, this),
+				boost::bind(&PlaySequenceActionClient::feedbackCb, this, _1));
 }
 
 void PlaySequenceActionClient::doneCb(const actionlib::SimpleClientGoalState& state, const PlaySequenceResultConstPtr& result)
