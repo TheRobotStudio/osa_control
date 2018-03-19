@@ -51,7 +51,7 @@
 #include "osa_control/switchNode.h"
 #include "osa_control/getSlaveCmdArray.h"
 //OSA
-#include <enums.h>
+#include <osa_communication/enums.h>
 
 /*** Defines ***/
 #define NUMBER_OF_WHEELS	2
