@@ -72,7 +72,7 @@
 #define SLAVE_PELVIS_ID			5
 #define SLAVE_HEAD_ID			6
 
-#define HEART_BEAT				15 //20 //30 //20 //(20 for 6 slaves with 16 nodes each) //(25 for 5 slaves with 15 nodes each) //TODO dynamic reconfigure
+#define HEART_BEAT				100 //15 //20 //30 //20 //(20 for 6 slaves with 16 nodes each) //(25 for 5 slaves with 15 nodes each) //TODO dynamic reconfigure
 
 //Commands
 #define SET_TARGET_POSITION 				0

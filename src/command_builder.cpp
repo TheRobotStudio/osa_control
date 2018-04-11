@@ -41,7 +41,7 @@
 #include "robot_defines.h"
 
 /*! Defines */
-#define LOOP_RATE	HEART_BEAT
+#define LOOP_RATE	50	//HEART_BEAT
 //#define DOFS	2
 
 /*! Variables */
