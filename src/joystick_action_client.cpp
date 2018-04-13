@@ -48,7 +48,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <osa_control/PlaySequenceAction.h>
 //OSA
-#include <osa_communication/enums.h>
+#include <osa_common/enums.h>
 #include "osa_control/play_sequence_action_client.h"
 
 using namespace osa_control;

@@ -143,7 +143,7 @@ add_dependencies(osa_play_sequence_action_server osa_control_generate_messages_c
 add_dependencies(osa_joystick_action_client osa_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS} osa_common)
 target_link_libraries(osa_bag_recorder_motion ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_bag_recorder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 target_link_libraries(osa_xbox_joy_conductor ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})

@@ -52,7 +52,7 @@
 #include "osa_msgs/MotorCmdMultiArray.h"
 #include "osa_msgs/MotorDataMultiArray.h"
 //OSA
-#include <osa_communication/enums.h>
+#include <osa_common/enums.h>
 //Flann
 #include <flann/flann.hpp> //used for the kdtree search
 //others

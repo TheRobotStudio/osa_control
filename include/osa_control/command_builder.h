@@ -29,7 +29,7 @@
  * @author Cyril Jourdan
  * @date Oct 3, 2017
  * @version 0.1.0
- * @brief Header file for the class CommandFilter
+ * @brief Header file for the class CommandBuilder
  *
  * Contact: cyril.jourdan@therobotstudio.com
  * Created on : Oct 3, 2017
@@ -42,44 +42,53 @@
 //ROS
 #include <ros/ros.h>
 #include <ros/package.h>
-//ROS actionlib
-#include <actionlib/server/simple_action_server.h>
-#include <osa_control/PlaySequenceAction.h>
-//ROS bag
-#include <rosbag/bag.h>
 //ROS messages
 #include "osa_msgs/MotorCmdMultiArray.h"
-//Flann
-#include <flann/flann.hpp>
 //others
 #include <string>
+
+#include "osa_common/robot_description.h"
 
 namespace osa_control
 {
 
-typedef actionlib::SimpleActionServer<PlaySequenceAction> ActionServer;
-
 /**
- * @brief This is the class for CommandFilter.
+ * @brief This is the class for CommandBuilder.
  */
-class CommandFilter
+class CommandBuilder
 {
 public:
 	/**
 	 * @brief Constructor.
 	 */
-	CommandFilter();
+	CommandBuilder();
 
 	/**
 	 * @brief Destructor.
 	 */
-	~CommandFilter();
+	~CommandBuilder();
+
+	/** @brief Initialize the ROS node. */
+	bool init();
+
+	/** @brief Run the ROS node. */
+	void run();
 
 	void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
 	void resetMotorCmdArray();
 
 protected:
-	ros::NodeHandle nh_;
+	//ros::NodeHandle nh_;
+	osa_common::RobotDescription* ptr_robot_description_;
+	ros::Subscriber sub_set_motor_commands_;
+	ros::Publisher pub_send_motor_cmd_array_;
+	osa_msgs::MotorCmdMultiArray motor_cmd_array_;
+	std::vector<bool> cmd_ignored_; //[DOFS] = {false};
+	std::vector<int> mode_of_operation_; //[DOFS] = {NO_MODE};
+	std::vector<int> map_index_node_id_; //[DOFS] = {0}; // Maps the array index with the actual NodeID on the CAN bus.
+	std::vector<int> profile_position_cmd_step_; //[DOFS] = {0}; // Every Profile Position command is followed by a rising edge on the controlword.
+	std::vector<int> profile_velocity_cmd_step_; //[DOFS] = {0}; // Every Profile Velocity command is followed by setting the controlword.
+	//std::vector<int> step_;
 };
 
 } // namespace osa_control
