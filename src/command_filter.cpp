@@ -183,7 +183,7 @@ void CommandFilter::run()
  */
 void CommandFilter::motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
-
+	motor_cmd_array_ = *cmds;
 }
 
 /*! \fn void resetMotorCmdArray()
@@ -202,7 +202,7 @@ void CommandFilter::resetMotorCmdArray()
 
 void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level)
 {
-	ROS_INFO("Reconfigure Request: %f %f %f %f", config.enable, config.min, config.max, config.offset);
+	ROS_INFO("Reconfigure Request: %s %d %d %d", config.enable?"True":"False", config.min, config.max, config.offset);
 	motor_param_ = config;
 }
 
@@ -217,13 +217,7 @@ void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, 
 int main(int argc, char** argv)
 {
 	osa_control::CommandFilter *command_filter = new osa_control::CommandFilter();
-	if(command_filter->init()) return -1; //Or call that from the constructor ?
-
-	//Main loop
-	while(ros::ok())
-	{
-		//TODO wait ?
-	}
+	if(command_filter->init()) return -1;
 
 	return 0;
 }
