@@ -133,10 +133,10 @@ bool CommandBuilder::init()
 	profile_velocity_cmd_step_.resize(ptr_robot_description_->getRobotDof(), 0);
 
 	//Subsriber, need the number of EPOS for the FIFO
-	sub_set_motor_commands_ = nh.subscribe(ptr_robot_description_->getRobotNamespace() + "/set_motor_commands", 1, &CommandBuilder::setMotorCommandsCallback, this);
+	sub_motor_cmd_to_build_ = nh.subscribe(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_to_build", 1, &CommandBuilder::motorCmdToBuildCallback, this);
 
 	//Publishers
-	pub_send_motor_cmd_array_ = nh.advertise<osa_msgs::MotorCmdMultiArray>(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_array_", 1);
+	pub_send_motor_cmd_array_ = nh.advertise<osa_msgs::MotorCmdMultiArray>(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_array", 1);
 
 	//create the cmd multi array
 	motor_cmd_array_.layout.dim.push_back(std_msgs::MultiArrayDimension());
@@ -182,7 +182,7 @@ void CommandBuilder::run()
  *  \brief
  *  \return void
  */
-void CommandBuilder::setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
+void CommandBuilder::motorCmdToBuildCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
 	//ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
 

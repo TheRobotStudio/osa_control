@@ -74,12 +74,12 @@ public:
 	/** @brief Run the ROS node. */
 	void run();
 
-	void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
+	void motorCmdToBuildCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
 	void resetMotorCmdArray(); //TODO put in a parent class
 
 protected:
 	osa_common::RobotDescription* ptr_robot_description_;
-	ros::Subscriber sub_set_motor_commands_;
+	ros::Subscriber sub_motor_cmd_to_build_;
 	ros::Publisher pub_send_motor_cmd_array_;
 	osa_msgs::MotorCmdMultiArray motor_cmd_array_;
 	std::vector<bool> cmd_ignored_; //[DOFS] = {false};
