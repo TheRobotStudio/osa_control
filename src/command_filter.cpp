@@ -70,11 +70,11 @@ CommandFilter::~CommandFilter(void)
 bool CommandFilter::init()
 {
 	ROS_INFO("*** CommandFilter Init ***\n");
-
+/*
 	int init_argc = 0;
 	char** init_argv = 0;
 	ros::init(init_argc, init_argv, "osa_command_filter_node");
-
+*/
 	if(!ros::master::check())
 	{
 		return false;
@@ -127,6 +127,11 @@ bool CommandFilter::init()
 		return false;
 	}
 
+	ROS_INFO("Setup dynamic_reconfigure parameters");
+	//dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
+	motor_dyn_config_callback_f_ = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
+	motor_dyn_config_server_.setCallback(motor_dyn_config_callback_f_);
+
 	//Subsriber, need the number of EPOS for the FIFO
 	sub_motor_cmd_to_filter_ = nh.subscribe(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_to_filter", 1, &CommandFilter::motorCmdToFilterCallback, this);
 
@@ -158,11 +163,6 @@ bool CommandFilter::init()
 void CommandFilter::run()
 {
 	ros::Rate r(ptr_robot_description_->getRobotHeartbeat());
-
-	ROS_INFO("Setup dynamic_reconfigure parameters");
-	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
-	f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
-	motor_dyn_config_server_.setCallback(f);
 
 	while(ros::ok())
 	{
@@ -217,8 +217,12 @@ void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, 
  */
 int main(int argc, char** argv)
 {
+	ros::init(argc, argv, "osa_command_filter_node");
 	osa_control::CommandFilter *command_filter = new osa_control::CommandFilter();
 	if(command_filter->init()) return -1;
+
+	//When run() finishes
+	delete command_filter;
 
 	return 0;
 }

@@ -83,9 +83,10 @@ public:
 	void motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level);
 
 private:
+	//ros::NodeHandle nh_;
 	osa_common::RobotDescription* ptr_robot_description_;
 	dynamic_reconfigure::Server<osa_control::MotorDynConfig> motor_dyn_config_server_;
-	//dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f_;
+	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType motor_dyn_config_callback_f_;
 	osa_control::MotorDynConfig motor_param_;
 	ros::Subscriber sub_motor_cmd_to_filter_;
 	ros::Publisher pub_motor_cmd_to_build_;
