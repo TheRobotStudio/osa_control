@@ -42,22 +42,15 @@
 //ROS
 #include <ros/ros.h>
 #include <ros/package.h>
-//ROS actionlib
-#include <actionlib/server/simple_action_server.h>
-#include <osa_control/PlaySequenceAction.h>
-//ROS bag
-#include <rosbag/bag.h>
 //ROS messages
 #include "osa_msgs/MotorCmdMultiArray.h"
-//Flann
-#include <flann/flann.hpp>
 //others
 #include <string>
 
+#include "osa_common/robot_description.h"
+
 namespace osa_control
 {
-
-typedef actionlib::SimpleActionServer<PlaySequenceAction> ActionServer;
 
 /**
  * @brief This is the class for CommandFilter.
@@ -75,11 +68,20 @@ public:
 	 */
 	~CommandFilter();
 
-	void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
+	/** @brief Initialize the ROS node. */
+	bool init();
+
+	/** @brief Run the ROS node. */
+	void run();
+
+	void motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
 	void resetMotorCmdArray();
 
-protected:
-	ros::NodeHandle nh_;
+private:
+	osa_common::RobotDescription* ptr_robot_description_;
+	ros::Subscriber sub_motor_cmd_to_filter_;
+	ros::Publisher pub_motor_cmd_to_build_;
+	osa_msgs::MotorCmdMultiArray motor_cmd_array_;
 };
 
 } // namespace osa_control

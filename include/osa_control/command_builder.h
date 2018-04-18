@@ -75,10 +75,9 @@ public:
 	void run();
 
 	void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
-	void resetMotorCmdArray();
+	void resetMotorCmdArray(); //TODO put in a parent class
 
 protected:
-	//ros::NodeHandle nh_;
 	osa_common::RobotDescription* ptr_robot_description_;
 	ros::Subscriber sub_set_motor_commands_;
 	ros::Publisher pub_send_motor_cmd_array_;
@@ -88,7 +87,6 @@ protected:
 	std::vector<int> map_index_node_id_; //[DOFS] = {0}; // Maps the array index with the actual NodeID on the CAN bus.
 	std::vector<int> profile_position_cmd_step_; //[DOFS] = {0}; // Every Profile Position command is followed by a rising edge on the controlword.
 	std::vector<int> profile_velocity_cmd_step_; //[DOFS] = {0}; // Every Profile Velocity command is followed by setting the controlword.
-	//std::vector<int> step_;
 };
 
 } // namespace osa_control

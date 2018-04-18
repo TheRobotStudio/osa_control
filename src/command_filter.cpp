@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Robot Studio
+ * Copyright (c) 2018, The Robot Studio
  *  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,10 @@
 
 #include <osa_common/enums.h>
 
-#include "command_filter.h"
+#include "osa_control/command_filter.h"
+
+using namespace std;
+using namespace osa_common;
 
 namespace osa_control
 {
@@ -80,6 +83,67 @@ bool CommandFilter::init()
 	ros::start(); // explicitly needed since our nodehandle is going out of scope.
 	ros::NodeHandle nh("~");
 
+	ptr_robot_description_ = new osa_common::RobotDescription(&nh);
+
+	ROS_INFO("*** Grab the parameters from the Parameter Server ***");
+
+	try
+	{
+		ptr_robot_description_->grabRobotNamespaceFromParameterServer();
+	}
+	catch(ros::InvalidNameException const &e)
+	{
+		ROS_ERROR("Invalid Robot Namespace parameter!");
+		return false;
+	}
+
+	try
+	{
+		ptr_robot_description_->grabRobotFromParameterServer();
+	}
+	catch(ros::InvalidNameException const &e)
+	{
+		ROS_ERROR(e.what());
+		return false;
+	}
+	catch(runtime_error const &e)
+	{
+		ROS_ERROR("Robot Namespace parameter not defined!");
+		return false;
+	}
+
+	try
+	{
+		ptr_robot_description_->grabDOFFromParameterServer();
+	}
+	catch(ros::InvalidNameException const &e)
+	{
+		ROS_ERROR(e.what());
+		return false;
+	}
+	catch(runtime_error const &e)
+	{
+		ROS_ERROR("Robot Namespace parameter not defined!");
+		return false;
+	}
+
+	//Subsriber, need the number of EPOS for the FIFO
+	sub_motor_cmd_to_filter_ = nh.subscribe(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_to_filter", 1, &CommandFilter::motorCmdToFilterCallback, this);
+
+	//Publishers
+	pub_motor_cmd_to_build_ = nh.advertise<osa_msgs::MotorCmdMultiArray>(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_to_build", 1);
+
+	//create the cmd multi array
+	motor_cmd_array_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+	motor_cmd_array_.layout.dim[0].size = ptr_robot_description_->getRobotDof(); //NUMBER_SLAVE_BOARDS;
+	motor_cmd_array_.layout.dim[0].stride = ptr_robot_description_->getRobotDof(); //NUMBER_SLAVE_BOARDS*NUMBER_MAX_EPOS2_PER_SLAVE;
+	motor_cmd_array_.layout.dim[0].label = "epos";
+
+	motor_cmd_array_.layout.data_offset = 0;
+
+	motor_cmd_array_.motor_cmd.clear();
+	motor_cmd_array_.motor_cmd.resize(ptr_robot_description_->getRobotDof());
+
 	//then start the main loop
 	ROS_INFO("*** Command filter Start main loop ***");
 	run();
@@ -93,11 +157,18 @@ bool CommandFilter::init()
  */
 void CommandFilter::run()
 {
-	ros::Rate r(50);
+	ros::Rate r(ptr_robot_description_->getRobotHeartbeat());
 
 	while(ros::ok())
 	{
+		resetMotorCmdArray();
+
+		//Check motor cmds and dynamic reconfiguration
 		ros::spinOnce();
+
+		//publish the final motor command package
+		pub_motor_cmd_to_build_.publish(motor_cmd_array_);
+
 		r.sleep();
 	}
 }
@@ -106,7 +177,7 @@ void CommandFilter::run()
  *  \brief
  *  \return void
  */
-void CommandFilter::setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
+void CommandFilter::motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
 
 }
@@ -117,7 +188,12 @@ void CommandFilter::setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayC
  */
 void CommandFilter::resetMotorCmdArray()
 {
-
+	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
+	{
+		motor_cmd_array_.motor_cmd[i].node_id = 0;
+		motor_cmd_array_.motor_cmd[i].command = SEND_DUMB_MESSAGE;
+		motor_cmd_array_.motor_cmd[i].value = 0;
+	}
 }
 
 } // namespace osa_control
