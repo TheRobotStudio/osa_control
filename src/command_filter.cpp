@@ -51,6 +51,11 @@ namespace osa_control
 
 CommandFilter::CommandFilter()
 {
+	ROS_INFO("*** CommandFilter Init ***\n");
+
+	int init_argc = 0;
+	char** init_argv = 0;
+	ros::init(init_argc, init_argv, "osa_command_filter_node");
 }
 
 CommandFilter::~CommandFilter(void)
@@ -69,12 +74,12 @@ CommandFilter::~CommandFilter(void)
  */
 bool CommandFilter::init()
 {
-	ROS_INFO("*** CommandFilter Init ***\n");
+/*	ROS_INFO("*** CommandFilter Init ***\n");
 
 	int init_argc = 0;
 	char** init_argv = 0;
 	ros::init(init_argc, init_argv, "osa_command_filter_node");
-
+*/
 	if(!ros::master::check())
 	{
 		return false;
