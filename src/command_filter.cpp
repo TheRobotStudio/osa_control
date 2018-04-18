@@ -158,11 +158,12 @@ bool CommandFilter::init()
 void CommandFilter::run()
 {
 	ros::Rate r(ptr_robot_description_->getRobotHeartbeat());
-/*
+
 	ROS_INFO("Setup dynamic_reconfigure parameters");
-	f_ = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
-	motor_dyn_config_server_.setCallback(f_);
-*/
+	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
+	f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
+	motor_dyn_config_server_.setCallback(f);
+
 	while(ros::ok())
 	{
 		resetMotorCmdArray();
