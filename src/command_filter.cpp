@@ -128,11 +128,8 @@ bool CommandFilter::init()
 	}
 
 	ROS_INFO("Setup dynamic_reconfigure parameters");
-	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
-
-	//f = boost::bind(&CommandFilter::motorDynConfigCallback, _1, _2);
-	f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
-	motor_dyn_config_server_.setCallback(f);
+	f_ = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
+	motor_dyn_config_server_.setCallback(f_);
 
 	//Subsriber, need the number of EPOS for the FIFO
 	sub_motor_cmd_to_filter_ = nh.subscribe(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_to_filter", 1, &CommandFilter::motorCmdToFilterCallback, this);
