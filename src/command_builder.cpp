@@ -26,13 +26,11 @@
 
 /**
  * @file command_builder.cpp
- * @author Cyril Jourdan
- * @date Sep 11, 2017
- * @version 0.1.0
+ * @author Cyril Jourdan <cyril.jourdan@therobotstudio.com>
+ * @date Modified on Apr 18, 2018
+ * @date Created on Mar 15, 2013
+ * @version 0.1.1
  * @brief Implementation file for the class CommandBuilder
- *
- * Contact: cyril.jourdan@therobotstudio.com
- * Created on : Mar 15, 2013
  */
 
 /*! Includes */
