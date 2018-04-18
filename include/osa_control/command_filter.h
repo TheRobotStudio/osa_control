@@ -47,6 +47,9 @@
 //others
 #include <string>
 
+#include <dynamic_reconfigure/server.h>
+#include <osa_control/MotorDynConfig.h>
+
 #include "osa_common/robot_description.h"
 
 namespace osa_control
@@ -77,8 +80,12 @@ public:
 	void motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
 	void resetMotorCmdArray();
 
+	void motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level);
+
 private:
 	osa_common::RobotDescription* ptr_robot_description_;
+	dynamic_reconfigure::Server<osa_control::MotorDynConfig> motor_dyn_config_server_;
+	osa_control::MotorDynConfig motor_param_;
 	ros::Subscriber sub_motor_cmd_to_filter_;
 	ros::Publisher pub_motor_cmd_to_build_;
 	osa_msgs::MotorCmdMultiArray motor_cmd_array_;

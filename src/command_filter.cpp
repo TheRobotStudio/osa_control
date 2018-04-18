@@ -127,6 +127,13 @@ bool CommandFilter::init()
 		return false;
 	}
 
+	ROS_INFO("Setup dynamic_reconfigure parameters");
+	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
+
+	//f = boost::bind(&CommandFilter::motorDynConfigCallback, _1, _2);
+	f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
+	motor_dyn_config_server_.setCallback(f);
+
 	//Subsriber, need the number of EPOS for the FIFO
 	sub_motor_cmd_to_filter_ = nh.subscribe(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_to_filter", 1, &CommandFilter::motorCmdToFilterCallback, this);
 
@@ -194,6 +201,12 @@ void CommandFilter::resetMotorCmdArray()
 		motor_cmd_array_.motor_cmd[i].command = SEND_DUMB_MESSAGE;
 		motor_cmd_array_.motor_cmd[i].value = 0;
 	}
+}
+
+void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level)
+{
+	ROS_INFO("Reconfigure Request: %f %f %f %f", config.enable, config.min, config.max, config.offset);
+	motor_param_ = config;
 }
 
 } // namespace osa_control
