@@ -27,12 +27,12 @@
 /**
  * @file command_filter.cpp
  * @author Cyril Jourdan
- * @date Sep 11, 2017
+ * @date Apr 19, 2018
  * @version 0.1.0
  * @brief Implementation file for the class CommandFilter
  *
  * Contact: cyril.jourdan@therobotstudio.com
- * Created on : Mar 15, 2013
+ * Created on : Oct 3, 2017
  */
 
 /*! Includes */
@@ -128,11 +128,23 @@ bool CommandFilter::init()
 	}
 
 	ROS_INFO("Setup dynamic_reconfigure parameters");
-	//dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
-	motor_dyn_config_callback_f_1_ = boost::bind(&CommandFilter::motorDynConfigCallback1, this, _1, _2);
-	motor_dyn_config_callback_f_2_ = boost::bind(&CommandFilter::motorDynConfigCallback2, this, _1, _2);
-	motor_dyn_config_server_1_.setCallback(motor_dyn_config_callback_f_1_);
-	motor_dyn_config_server_2_.setCallback(motor_dyn_config_callback_f_2_);
+
+	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
+	{
+		const std::string controller_name = ptr_robot_description_->getControllerList().at(i)->getName();
+
+		ros::NodeHandle *node_handle = new ros::NodeHandle(controller_name.c_str());
+		nh_list_.push_back(node_handle);
+
+		dynamic_reconfigure::Server<osa_control::MotorDynConfig> *s = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>(*node_handle);
+		dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;// = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType();
+
+		f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, controller_name);
+		motor_dyn_config_callback_f_list_.push_back(f);
+
+		s->setCallback(f);
+		motor_dyn_config_server_list_.push_back(s);
+	}
 
 	//Subsriber, need the number of EPOS for the FIFO
 	sub_motor_cmd_to_filter_ = nh.subscribe(ptr_robot_description_->getRobotNamespace() + "/motor_cmd_to_filter", 1, &CommandFilter::motorCmdToFilterCallback, this);
@@ -203,13 +215,7 @@ void CommandFilter::resetMotorCmdArray()
 	}
 }
 
-void CommandFilter::motorDynConfigCallback1(osa_control::MotorDynConfig &config, uint32_t level)
-{
-	ROS_INFO("Reconfigure Request: %s %d %d %d", config.enable?"True":"False", config.min, config.max, config.offset);
-	motor_param_ = config;
-}
-
-void CommandFilter::motorDynConfigCallback2(osa_control::MotorDynConfig &config, uint32_t level)
+void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const std::string controller_name)
 {
 	ROS_INFO("Reconfigure Request: %s %d %d %d", config.enable?"True":"False", config.min, config.max, config.offset);
 	motor_param_ = config;

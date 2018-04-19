@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Robot Studio
+ * Copyright (c) 2018, The Robot Studio
  *  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,18 +80,13 @@ public:
 	void motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
 	void resetMotorCmdArray();
 
-	void motorDynConfigCallback1(osa_control::MotorDynConfig &config, uint32_t level);
-	void motorDynConfigCallback2(osa_control::MotorDynConfig &config, uint32_t level);
+	void motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const std::string controller_name);
 
 private:
-	//ros::NodeHandle nh_;
+	std::vector<ros::NodeHandle*> nh_list_;
 	osa_common::RobotDescription* ptr_robot_description_;
-	dynamic_reconfigure::Server<osa_control::MotorDynConfig> motor_dyn_config_server_1_;
-	dynamic_reconfigure::Server<osa_control::MotorDynConfig> motor_dyn_config_server_2_;
-	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType motor_dyn_config_callback_f_1_;
-	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType motor_dyn_config_callback_f_2_;
-	//std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>> motor_dyn_config_server_;
-	//std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType> motor_dyn_config_callback_f_;
+	std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>*> motor_dyn_config_server_list_;
+	std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType> motor_dyn_config_callback_f_list_;
 	osa_control::MotorDynConfig motor_param_;
 	ros::Subscriber sub_motor_cmd_to_filter_;
 	ros::Publisher pub_motor_cmd_to_build_;
