@@ -83,10 +83,10 @@ public:
 	void motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const int idx); //const std::string dof_name)
 
 private:
-	std::vector<ros::NodeHandle*> nh_list_;
+	//std::vector<ros::NodeHandle*> nh_list_;
 	osa_common::RobotDescription* ptr_robot_description_;
 	std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>*> motor_dyn_config_server_list_;
-	std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType> motor_dyn_config_callback_f_list_;
+	//std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType> motor_dyn_config_callback_f_list_;
 	osa_control::MotorDynConfig motor_param_;
 	ros::Subscriber sub_motor_cmd_to_filter_;
 	ros::Publisher pub_motor_cmd_to_build_;

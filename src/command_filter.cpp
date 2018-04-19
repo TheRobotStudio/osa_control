@@ -55,6 +55,8 @@ CommandFilter::CommandFilter()
 
 CommandFilter::~CommandFilter(void)
 {
+	//TODO delete vector of pointers
+
 	if(ros::isStarted())
 	{
 	  ros::shutdown(); // This is necessary after using ros::start().
@@ -133,15 +135,17 @@ bool CommandFilter::init()
 	{
 		const std::string dof_name = ptr_robot_description_->getControllerList().at(i)->getName();
 
-		ros::NodeHandle *node_handle = new ros::NodeHandle(dof_name.c_str());
-		nh_list_.push_back(node_handle);
+		//ros::NodeHandle *node_handle = new ros::NodeHandle(dof_name.c_str());
+		//nh_list_.push_back(node_handle);
+		ros::NodeHandle node_handle(dof_name.c_str());
 
-		dynamic_reconfigure::Server<osa_control::MotorDynConfig> *s = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>(*node_handle);
+		//dynamic_reconfigure::Server<osa_control::MotorDynConfig> *s = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>(*node_handle);
+		dynamic_reconfigure::Server<osa_control::MotorDynConfig> *s = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>(node_handle);
 		dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
 
 		//f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, dof_name);
 		f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, i);
-		motor_dyn_config_callback_f_list_.push_back(f);
+		//motor_dyn_config_callback_f_list_.push_back(f);
 
 		s->setCallback(f);
 		motor_dyn_config_server_list_.push_back(s);
