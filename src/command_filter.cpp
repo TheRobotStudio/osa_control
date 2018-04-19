@@ -139,7 +139,8 @@ bool CommandFilter::init()
 		dynamic_reconfigure::Server<osa_control::MotorDynConfig> *s = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>(*node_handle);
 		dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
 
-		f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, dof_name);
+		//f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, dof_name);
+		f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, i);
 		motor_dyn_config_callback_f_list_.push_back(f);
 
 		s->setCallback(f);
@@ -215,10 +216,12 @@ void CommandFilter::resetMotorCmdArray()
 	}
 }
 
-void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const std::string dof_name)
+void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const int idx)//const std::string dof_name)
 {
-	motor_param_ = config;
+	ROS_INFO("Dynamic Reconfigure Request for dof%d [%s]: %s %d %d %d", idx+1, ptr_robot_description_->getControllerList().at(idx)->getName().c_str(), config.enable?"True":"False", config.min_pos, config.max_pos, config.offset_pos);
 
+	motor_param_ = config;
+/*
 	//Find the index in the array which correspond to the dof_name
 	auto it = find_if(ptr_robot_description_->getControllerList().begin(), ptr_robot_description_->getControllerList().end(),
 			[&dof_name](const osa_common::Controller* obj)-> bool {return obj->getName().compare(dof_name);});
@@ -230,7 +233,7 @@ void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, 
 		auto index = std::distance(ptr_robot_description_->getControllerList().begin(), it);
 
 		ROS_INFO("Dynamic Reconfigure Request for dof%d: %s %d %d %d", index, config.enable?"True":"False", config.min_pos, config.max_pos, config.offset_pos);
-	}
+	}*/
 }
 
 } // namespace osa_control
