@@ -131,15 +131,15 @@ bool CommandFilter::init()
 
 	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
 	{
-		const std::string controller_name = ptr_robot_description_->getControllerList().at(i)->getName();
+		const std::string dof_name = ptr_robot_description_->getControllerList().at(i)->getName();
 
-		ros::NodeHandle *node_handle = new ros::NodeHandle(controller_name.c_str());
+		ros::NodeHandle *node_handle = new ros::NodeHandle(dof_name.c_str());
 		nh_list_.push_back(node_handle);
 
 		dynamic_reconfigure::Server<osa_control::MotorDynConfig> *s = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>(*node_handle);
-		dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;// = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType();
+		dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
 
-		f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, controller_name);
+		f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, dof_name);
 		motor_dyn_config_callback_f_list_.push_back(f);
 
 		s->setCallback(f);
@@ -215,10 +215,22 @@ void CommandFilter::resetMotorCmdArray()
 	}
 }
 
-void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const std::string controller_name)
+void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const std::string dof_name)
 {
-	ROS_INFO("Reconfigure Request: %s %d %d %d", config.enable?"True":"False", config.min, config.max, config.offset);
 	motor_param_ = config;
+
+	//Find the index in the array which correspond to the dof_name
+	auto it = find_if(ptr_robot_description_->getControllerList().begin(), ptr_robot_description_->getControllerList().end(),
+			[&dof_name](const osa_common::Controller* obj)-> bool {return obj->getName().compare(dof_name);});
+
+	if(it != ptr_robot_description_->getControllerList().end())
+	{
+		//Element found, 'it' is an iterator to the first matching element (dof must have different names).
+		// get the index:
+		auto index = std::distance(ptr_robot_description_->getControllerList().begin(), it);
+
+		ROS_INFO("Dynamic Reconfigure Request for dof%d: %s %d %d %d", index, config.enable?"True":"False", config.min_pos, config.max_pos, config.offset_pos);
+	}
 }
 
 } // namespace osa_control

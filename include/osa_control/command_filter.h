@@ -80,7 +80,7 @@ public:
 	void motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
 	void resetMotorCmdArray();
 
-	void motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const std::string controller_name);
+	void motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const std::string dof_name);
 
 private:
 	std::vector<ros::NodeHandle*> nh_list_;
