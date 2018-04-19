@@ -87,7 +87,8 @@ private:
 	osa_common::RobotDescription* ptr_robot_description_;
 	dynamic_reconfigure::Server<osa_control::MotorDynConfig> motor_dyn_config_server_1_;
 	dynamic_reconfigure::Server<osa_control::MotorDynConfig> motor_dyn_config_server_2_;
-	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType motor_dyn_config_callback_f_;
+	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType motor_dyn_config_callback_f_1_;
+	dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType motor_dyn_config_callback_f_2_;
 	//std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>> motor_dyn_config_server_;
 	//std::vector<dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType> motor_dyn_config_callback_f_;
 	osa_control::MotorDynConfig motor_param_;
