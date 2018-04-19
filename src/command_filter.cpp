@@ -129,8 +129,8 @@ bool CommandFilter::init()
 
 	ROS_INFO("Setup dynamic_reconfigure parameters");
 	//dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
-	motor_dyn_config_callback_f_1_ = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
-	motor_dyn_config_callback_f_2_ = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2);
+	motor_dyn_config_callback_f_1_ = boost::bind(&CommandFilter::motorDynConfigCallback1, this, _1, _2);
+	motor_dyn_config_callback_f_2_ = boost::bind(&CommandFilter::motorDynConfigCallback2, this, _1, _2);
 	motor_dyn_config_server_1_.setCallback(motor_dyn_config_callback_f_1_);
 	motor_dyn_config_server_2_.setCallback(motor_dyn_config_callback_f_2_);
 
@@ -203,7 +203,13 @@ void CommandFilter::resetMotorCmdArray()
 	}
 }
 
-void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level)
+void CommandFilter::motorDynConfigCallback1(osa_control::MotorDynConfig &config, uint32_t level)
+{
+	ROS_INFO("Reconfigure Request: %s %d %d %d", config.enable?"True":"False", config.min, config.max, config.offset);
+	motor_param_ = config;
+}
+
+void CommandFilter::motorDynConfigCallback2(osa_control::MotorDynConfig &config, uint32_t level)
 {
 	ROS_INFO("Reconfigure Request: %s %d %d %d", config.enable?"True":"False", config.min, config.max, config.offset);
 	motor_param_ = config;
