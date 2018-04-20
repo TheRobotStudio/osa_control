@@ -131,6 +131,14 @@ bool CommandFilter::init()
 
 	ROS_INFO("Setup dynamic_reconfigure parameters");
 
+	//Init the motor dyn config list
+	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
+	{
+		motor_param_list_.push_back(osa_control::MotorDynConfig::__getDefault__());
+
+		ROS_INFO("max pos = %d", motor_param_list_[i].max_pos);
+	}
+
 	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
 	{
 		const std::string dof_name = ptr_robot_description_->getControllerList().at(i)->getName();
@@ -159,12 +167,6 @@ bool CommandFilter::init()
 
 	motor_cmd_array_.motor_cmd.clear();
 	motor_cmd_array_.motor_cmd.resize(ptr_robot_description_->getRobotDof());
-
-	//Init the motor dyn config list
-	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
-	{
-		motor_param_list_.push_back(osa_control::MotorDynConfig::__getDefault__());
-	}
 
 	//then start the main loop
 	ROS_INFO("*** Command filter Start main loop ***");
@@ -260,7 +262,8 @@ void CommandFilter::resetMotorCmdArray()
 
 void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const int idx)//const std::string dof_name)
 {
-	ROS_INFO("Dynamic Reconfigure Request for dof%d [%s]: %s %d %d %d", idx+1, ptr_robot_description_->getControllerList().at(idx)->getName().c_str(), config.enable?"True":"False", config.min_pos, config.max_pos, config.offset_pos);
+	ROS_INFO("Dynamic Reconfigure Request for dof%d [%s]: %s %d %d %d", idx+1, ptr_robot_description_->getControllerList().at(idx)->getName().c_str(),
+			config.enable?"True":"False", config.min_pos, config.max_pos, config.offset_pos);
 
 	motor_param_list_[idx] = config;
 /*
