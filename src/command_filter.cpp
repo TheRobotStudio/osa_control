@@ -160,6 +160,12 @@ bool CommandFilter::init()
 	motor_cmd_array_.motor_cmd.clear();
 	motor_cmd_array_.motor_cmd.resize(ptr_robot_description_->getRobotDof());
 
+	//Init the motor dyn config list
+	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
+	{
+		motor_param_list_.push_back(osa_control::MotorDynConfig::__getDefault__());
+	}
+
 	//then start the main loop
 	ROS_INFO("*** Command filter Start main loop ***");
 	run();
