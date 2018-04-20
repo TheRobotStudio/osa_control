@@ -134,19 +134,11 @@ bool CommandFilter::init()
 	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
 	{
 		const std::string dof_name = ptr_robot_description_->getControllerList().at(i)->getName();
-
-		//ros::NodeHandle *node_handle = new ros::NodeHandle(dof_name.c_str());
-		//nh_list_.push_back(node_handle);
 		ros::NodeHandle node_handle(dof_name.c_str());
 
-		//dynamic_reconfigure::Server<osa_control::MotorDynConfig> *s = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>(*node_handle);
 		dynamic_reconfigure::Server<osa_control::MotorDynConfig> *s = new dynamic_reconfigure::Server<osa_control::MotorDynConfig>(node_handle);
 		dynamic_reconfigure::Server<osa_control::MotorDynConfig>::CallbackType f;
-
-		//f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, dof_name);
 		f = boost::bind(&CommandFilter::motorDynConfigCallback, this, _1, _2, i);
-		//motor_dyn_config_callback_f_list_.push_back(f);
-
 		s->setCallback(f);
 		motor_dyn_config_server_list_.push_back(s);
 	}
@@ -190,9 +182,6 @@ void CommandFilter::run()
 		//Check motor cmds and dynamic reconfiguration
 		ros::spinOnce();
 
-		//publish the final motor command package
-		pub_motor_cmd_to_build_.publish(motor_cmd_array_);
-
 		r.sleep();
 	}
 }
@@ -204,6 +193,49 @@ void CommandFilter::run()
 void CommandFilter::motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
 	motor_cmd_array_ = *cmds;
+
+	//filter the cmds
+	for(int i=0; i<motor_cmd_array_.layout.dim[0].stride; i++)
+	{
+		int node_id = motor_cmd_array_.motor_cmd[i].node_id;
+
+		//find the index in the array which correspond to the node-id
+		auto it = find_if(ptr_robot_description_->getControllerList().begin(), ptr_robot_description_->getControllerList().end(),
+				[&node_id](const osa_common::Controller* obj)-> bool {return obj->getNodeID() == node_id;});
+
+		if(it != ptr_robot_description_->getControllerList().end())
+		{
+			auto index = std::distance(ptr_robot_description_->getControllerList().begin(), it);
+
+			//Now we have the index to get the right parameters in motor_param_list_
+			if(motor_param_list_[index].enable)
+			{
+				if(motor_cmd_array_.motor_cmd[i].command == SET_TARGET_POSITION)
+				{
+					//clip the value
+					if(motor_cmd_array_.motor_cmd[i].value > motor_param_list_[index].max_pos)
+						motor_cmd_array_.motor_cmd[i].value = motor_param_list_[index].max_pos;
+					if(motor_cmd_array_.motor_cmd[i].value < motor_param_list_[index].min_pos)
+						motor_cmd_array_.motor_cmd[i].value = motor_param_list_[index].min_pos;
+
+					//add the offset //TODO decide whether this apply before or after clipping
+					motor_cmd_array_.motor_cmd[i].value += motor_param_list_[index].offset_pos;
+				}
+			}
+			else
+			{
+				ROS_DEBUG_STREAM("Motor " << ptr_robot_description_->getControllerList()[index]->getName() << " id disabled.");
+
+				//send dumb message instead, which will result in sending nothing on the bus
+				motor_cmd_array_.motor_cmd[i].command = SEND_DUMB_MESSAGE;
+
+				//TODO in this case send a controlword to really disable the EPOS controller.
+			}
+		}
+	}
+
+	//publish the final motor command package
+	pub_motor_cmd_to_build_.publish(motor_cmd_array_);
 }
 
 /*! \fn void resetMotorCmdArray()
@@ -224,7 +256,7 @@ void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, 
 {
 	ROS_INFO("Dynamic Reconfigure Request for dof%d [%s]: %s %d %d %d", idx+1, ptr_robot_description_->getControllerList().at(idx)->getName().c_str(), config.enable?"True":"False", config.min_pos, config.max_pos, config.offset_pos);
 
-	motor_param_ = config;
+	motor_param_list_[idx] = config;
 /*
 	//Find the index in the array which correspond to the dof_name
 	auto it = find_if(ptr_robot_description_->getControllerList().begin(), ptr_robot_description_->getControllerList().end(),
