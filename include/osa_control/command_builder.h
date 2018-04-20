@@ -26,13 +26,11 @@
 
 /**
  * @file command_builder.h
- * @author Cyril Jourdan
- * @date Oct 3, 2017
- * @version 0.1.0
+ * @author Cyril Jourdan <cyril.jourdan@therobotstudio.com>
+ * @date Modified on Apr 20, 2018
+ * @date Created on Oct 3, 2017
+ * @version 0.1.1
  * @brief Header file for the class CommandBuilder
- *
- * Contact: cyril.jourdan@therobotstudio.com
- * Created on : Oct 3, 2017
  */
 
 #ifndef OSA_CONTROL_COMMAND_BUILDER_H
@@ -44,10 +42,10 @@
 #include <ros/package.h>
 //ROS messages
 #include "osa_msgs/MotorCmdMultiArray.h"
+//ROS dependencies
+#include "osa_common/robot_description.h"
 //others
 #include <string>
-
-#include "osa_common/robot_description.h"
 
 namespace osa_control
 {
@@ -68,25 +66,40 @@ public:
 	 */
 	~CommandBuilder();
 
-	/** @brief Initialize the ROS node. */
+	/**
+	 * @brief Initialize the ROS node.
+	 * @return bool Returns true if the initialization has completed successfully and false otherwise.
+	 */
 	bool init();
 
-	/** @brief Run the ROS node. */
+	/**
+	 * @brief Run the ROS node.
+	 * @return void
+	 */
 	void run();
 
+	/** @fn void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
+	 *  @brief
+	 *  @return void
+	 */
 	void motorCmdToBuildCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds);
+
+	/** @fn void resetMotorCmdArray()
+	 *  @brief
+	 *  @return void
+	 */
 	void resetMotorCmdArray(); //TODO put in a parent class
 
-protected:
+private:
 	osa_common::RobotDescription* ptr_robot_description_;
 	ros::Subscriber sub_motor_cmd_to_build_;
 	ros::Publisher pub_send_motor_cmd_array_;
 	osa_msgs::MotorCmdMultiArray motor_cmd_array_;
-	std::vector<bool> cmd_ignored_; //[DOFS] = {false};
-	std::vector<int> mode_of_operation_; //[DOFS] = {NO_MODE};
-	std::vector<int> map_index_node_id_; //[DOFS] = {0}; // Maps the array index with the actual NodeID on the CAN bus.
-	std::vector<int> profile_position_cmd_step_; //[DOFS] = {0}; // Every Profile Position command is followed by a rising edge on the controlword.
-	std::vector<int> profile_velocity_cmd_step_; //[DOFS] = {0}; // Every Profile Velocity command is followed by setting the controlword.
+	std::vector<bool> cmd_ignored_;
+	std::vector<int> mode_of_operation_;
+	std::vector<int> map_index_node_id_; // Maps the array index with the actual NodeID on the CAN bus.
+	std::vector<int> profile_position_cmd_step_; // Every Profile Position command is followed by a rising edge on the controlword.
+	std::vector<int> profile_velocity_cmd_step_; // Every Profile Velocity command is followed by setting the controlword.
 };
 
 } // namespace osa_control

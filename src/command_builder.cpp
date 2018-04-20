@@ -61,10 +61,6 @@ CommandBuilder::~CommandBuilder(void)
 	wait();
 }
 
-/**
- * @brief Initialize the ROS node.
- * @return bool Returns true if the initialization has completed successfully and false otherwise.
- */
 bool CommandBuilder::init()
 {
 	ROS_INFO("*** CommandBuilder Init ***\n");
@@ -156,10 +152,6 @@ bool CommandBuilder::init()
 	return true;
 }
 
-/**
- * @brief Run the ROS node.
- * @return void
- */
 void CommandBuilder::run()
 {
 	ros::Rate r(ptr_robot_description_->getRobotHeartbeat());
@@ -178,10 +170,6 @@ void CommandBuilder::run()
 	}
 }
 
-/*! \fn void setMotorCommandsCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
- *  \brief
- *  \return void
- */
 void CommandBuilder::motorCmdToBuildCallback(const osa_msgs::MotorCmdMultiArrayConstPtr& cmds)
 {
 	//ROS_INFO("Nb EPOS = %d", cmds->layout.dim[0].stride);
@@ -354,10 +342,6 @@ void CommandBuilder::motorCmdToBuildCallback(const osa_msgs::MotorCmdMultiArrayC
 	}//for
 }
 
-/*! \fn void resetMotorCmdArray()
- *  \brief
- *  \return void
- */
 void CommandBuilder::resetMotorCmdArray()
 {
 	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
@@ -370,11 +354,11 @@ void CommandBuilder::resetMotorCmdArray()
 
 } // namespace osa_control
 
-/*! \fn int main(int argc, char** argv)
- *  \brief
- *  \param argc
- *  \param argv
- *  \return int
+/** @fn int main(int argc, char** argv)
+ *  @brief
+ *  @param argc
+ *  @param argv
+ *  @return int
  */
 int main(int argc, char** argv)
 {

@@ -135,8 +135,6 @@ bool CommandFilter::init()
 	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
 	{
 		motor_param_list_.push_back(osa_control::MotorDynConfig::__getDefault__());
-
-		ROS_INFO("max pos = %d", motor_param_list_[i].max_pos);
 	}
 
 	for(int i=0; i<ptr_robot_description_->getRobotDof(); i++)
@@ -242,7 +240,7 @@ void CommandFilter::motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayC
 		}
 	}
 
-	//publish the final motor command package
+	//publish the final motor command package after filtering
 	pub_motor_cmd_to_build_.publish(motor_cmd_array_);
 }
 
@@ -262,23 +260,10 @@ void CommandFilter::resetMotorCmdArray()
 
 void CommandFilter::motorDynConfigCallback(osa_control::MotorDynConfig &config, uint32_t level, const int idx)//const std::string dof_name)
 {
-	ROS_INFO("Dynamic Reconfigure Request for dof%d [%s]: %s %d %d %d", idx+1, ptr_robot_description_->getControllerList().at(idx)->getName().c_str(),
+	ROS_DEBUG("Dynamic Reconfigure Request for dof%d [%s]: %s %d %d %d", idx+1, ptr_robot_description_->getControllerList().at(idx)->getName().c_str(),
 			config.enable?"True":"False", config.min_pos, config.max_pos, config.offset_pos);
 
 	motor_param_list_[idx] = config;
-/*
-	//Find the index in the array which correspond to the dof_name
-	auto it = find_if(ptr_robot_description_->getControllerList().begin(), ptr_robot_description_->getControllerList().end(),
-			[&dof_name](const osa_common::Controller* obj)-> bool {return obj->getName().compare(dof_name);});
-
-	if(it != ptr_robot_description_->getControllerList().end())
-	{
-		//Element found, 'it' is an iterator to the first matching element (dof must have different names).
-		// get the index:
-		auto index = std::distance(ptr_robot_description_->getControllerList().begin(), it);
-
-		ROS_INFO("Dynamic Reconfigure Request for dof%d: %s %d %d %d", index, config.enable?"True":"False", config.min_pos, config.max_pos, config.offset_pos);
-	}*/
 }
 
 } // namespace osa_control
