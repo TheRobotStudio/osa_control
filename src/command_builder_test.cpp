@@ -201,7 +201,7 @@ void CommandBuilder::motorCmdToBuildCallback(const osa_msgs::MotorCmdMultiArrayC
 			//ROS_INFO("motor[%d][%d] - command[%d] - value[%d]",
 			//		motor_cmd_array_.motor_cmd[i].slaveBoardID, motor_cmd_array_.motor_cmd[i].node_id, cmds->motor_cmd[i].command, cmds->motor_cmd[i].value);
 		}
- //FIXME commented out to use normal position mode
+/* //FIXME commented out to use normal position mode
 		//check if the controlword needs to be set in order to send a Profile Position command.
 		//This also ignore the current command.
 		if(profile_position_cmd_step_[i] == 1) //send the lower state of the controlword bit or set the operation mode
@@ -247,19 +247,19 @@ void CommandBuilder::motorCmdToBuildCallback(const osa_msgs::MotorCmdMultiArrayC
 		}
 		else // == 0
 		{
- //FIXME commented out to use normal position mode
+*/ //FIXME commented out to use normal position mode
 			if(cmds->motor_cmd[i].command == SET_TARGET_POSITION)
 			{
 				map_index_node_id_[i] = motor_cmd_array_.motor_cmd[i].node_id; // Save the NodeID for later steps.
 				motor_cmd_array_.motor_cmd[i].command = cmds->motor_cmd[i].command;
 				motor_cmd_array_.motor_cmd[i].value = cmds->motor_cmd[i].value;
-				profile_position_cmd_step_[i] = 1; //FIXME commented out to use normal position mode
+				//profile_position_cmd_step_[i] = 1; //FIXME commented out to use normal position mode
 
 				ROS_DEBUG("motor[%d] - Profile Position - send target position [%d]", motor_cmd_array_.motor_cmd[i].node_id, motor_cmd_array_.motor_cmd[i].value);
 			}
 
-			cmd_ignored_[i] = false; //FIXME commented out to use normal position mode
-		}//FIXME commented out to use normal position mode
+			//cmd_ignored_[i] = false; //FIXME commented out to use normal position mode
+//		}//FIXME commented out to use normal position mode
 
 		//Do the same for Profile Velocity
 		if(profile_velocity_cmd_step_[i] == 1) //send the controlword bit or set the operation mode

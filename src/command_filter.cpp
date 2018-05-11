@@ -218,6 +218,8 @@ void CommandFilter::motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayC
 			{
 				if(motor_cmd_array_.motor_cmd[i].command == SET_TARGET_POSITION)
 				{
+//TODO
+/*
 					//clip the value
 					if(motor_cmd_array_.motor_cmd[i].value > motor_param_list_[index].max_pos)
 						motor_cmd_array_.motor_cmd[i].value = motor_param_list_[index].max_pos;
@@ -226,6 +228,7 @@ void CommandFilter::motorCmdToFilterCallback(const osa_msgs::MotorCmdMultiArrayC
 
 					//add the offset //TODO decide whether this apply before or after clipping
 					motor_cmd_array_.motor_cmd[i].value += motor_param_list_[index].offset_pos;
+*/
 				}
 			}
 			else
