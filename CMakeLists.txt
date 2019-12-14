@@ -118,7 +118,7 @@ include_directories(
 ## Declare a cpp executable
 add_executable(osa_command_builder src/command_builder.cpp)
 add_executable(osa_command_filter src/command_filter.cpp)
-add_executable(osa_r2p_arm_test src/r2p_arm_test.cpp)
+add_executable(osa_airp1_arm_test src/airp1_arm_test.cpp)
 #add_executable(osa_bag_recorder_motion src/bag_recorder_motion.cpp)
 #add_executable(osa_bag_recorder src/bag_recorder.cpp)
 #add_executable(osa_xbox_joy_conductor src/xbox_joy_conductor.cpp)
@@ -149,7 +149,7 @@ add_dependencies(osa_command_filter osa_control_generate_messages_cpp osa_contro
 ## Specify libraries to link a library or executable target against
 target_link_libraries(osa_command_builder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS} osa_common)
 target_link_libraries(osa_command_filter ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS} osa_common)
-target_link_libraries(osa_r2p_arm_test ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
+target_link_libraries(osa_airp1_arm_test ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 #target_link_libraries(osa_bag_recorder_motion ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 #target_link_libraries(osa_bag_recorder ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
 #target_link_libraries(osa_xbox_joy_conductor ${catkin_LIBRARIES} ${Eigen_INCLUDE_DIRS})
